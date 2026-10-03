@@ -1,0 +1,94 @@
+name: Swift package validation
+
+on:
+  workflow_call:
+    inputs:
+      configuration:
+        type: string
+        default: .github/release.json
+      ref:
+        type: string
+        default: ''
+    outputs:
+      commit:
+        description: Validated source commit
+        value: ${{ jobs.configure.outputs.commit }}
+
+permissions:
+  contents: read
+
+jobs:
+  configure:
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.configuration.outputs.matrix }}
+      command: ${{ steps.configuration.outputs.command }}
+      commit: ${{ steps.configuration.outputs.commit }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+          persist-credentials: false
+      - id: configuration
+        env:
+          CONFIGURATION: ${{ inputs.configuration }}
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib, subprocess
+          config = json.loads(pathlib.Path(os.environ['CONFIGURATION']).read_text())
+          matrix = config['ci']
+          if not matrix.get('include'):
+              raise SystemExit('The CI matrix must have at least one entry')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              print('matrix=' + json.dumps(matrix, separators=(',', ':')), file=output)
+              print('command=' + config['check_command'], file=output)
+              print('commit=' + subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(), file=output)
+          PY
+
+  check:
+    needs: configure
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.configure.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.configure.outputs.commit }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Select the declared Xcode
+        if: matrix.xcode != ''
+        env:
+          XCODE_VERSION: ${{ matrix.xcode }}
+        run: |
+          python3 - <<'PY'
+          import os, pathlib, plistlib
+          expected = os.environ['XCODE_VERSION']
+          for app in sorted(pathlib.Path('/Applications').glob('Xcode*.app')):
+              info = plistlib.loads((app / 'Contents/Info.plist').read_bytes())
+              if info.get('CFBundleShortVersionString') == expected:
+                  with open(os.environ['GITHUB_ENV'], 'a') as output:
+                      print('DEVELOPER_DIR=' + str(app / 'Contents/Developer'), file=output)
+                  break
+          else:
+              raise SystemExit('Requested Xcode is not installed: ' + expected)
+          PY
+      - name: Validate the package
+        env:
+          CHECK_COMMAND: ${{ needs.configure.outputs.command }}
+          VALIDATION_NAME: ${{ matrix.name }}
+        run: |
+          set -euo pipefail
+          mkdir -p .build/release-validation
+          bash -eo pipefail -c "$CHECK_COMMAND" 2>&1 | tee .build/release-validation/check.log
+      - name: Preserve validation evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: validation-${{ matrix.name }}
+          path: .build/release-validation/
+          if-no-files-found: error
+          retention-days: 30
