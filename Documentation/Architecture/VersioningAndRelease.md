@@ -1,5 +1,8 @@
 # Versioning and Release
 
+The default branch for organization standards, templates and adopted packages is
+`master`. Each repository owns its history and release versions.
+
 This document owns the organization's defaults for participating Swift packages.
 Package-local release policy records the package's version owner, compatibility
 surface, platform window and validation entry points. Existing policy documents
