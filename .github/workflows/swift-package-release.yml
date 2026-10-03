@@ -1,0 +1,87 @@
+name: Swift package publication
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
+      accepted_commit:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      actions: read
+    concurrency:
+      group: publish-${{ github.repository }}-${{ inputs.tag }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.tag }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify accepted source and release notes
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+          ACCEPTED_COMMIT: ${{ inputs.accepted_commit }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$ACCEPTED_COMMIT"
+          mkdir -p .build/release-validation
+          Scripts/validate-version --tag "$RELEASE_TAG" --require-clean --notes .build/release-validation/release-notes.md --json > .build/release-validation/publication.json
+      - name: Prepare verified evidence
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --dir .build/ci-evidence
+          python3 - <<'PY'
+          import gzip, pathlib, tarfile
+          root = pathlib.Path('.build/ci-evidence')
+          with open('.build/release-validation/validation-evidence.tar.gz', 'wb') as raw:
+              with gzip.GzipFile(fileobj=raw, mode='wb', mtime=0, filename='') as compressed:
+                  with tarfile.open(fileobj=compressed, mode='w') as archive:
+                      for path in sorted(root.rglob('*')):
+                          if path.is_file():
+                              info = archive.gettarinfo(str(path), arcname=str(path.relative_to(root)))
+                              info.mtime = info.uid = info.gid = 0
+                              info.uname = info.gname = ''
+                              with path.open('rb') as source:
+                                  archive.addfile(info, source)
+          PY
+      - name: Publish or resume the matching release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          notes=.build/release-validation/release-notes.md
+          evidence=.build/release-validation/validation-evidence.tar.gz
+          if ! gh release view "$RELEASE_TAG" --json tagName >/dev/null 2>&1; then
+            preview=()
+            if [[ "$RELEASE_TAG" == *-* ]]; then preview=(--prerelease); fi
+            gh release create "$RELEASE_TAG" --verify-tag --draft --title "$RELEASE_TAG" --notes-file "$notes" "${preview[@]}"
+          fi
+          gh release view "$RELEASE_TAG" --json body,isDraft,assets > .build/release-validation/existing-release.json
+          python3 - <<'PY'
+          import json, pathlib
+          existing = json.loads(pathlib.Path('.build/release-validation/existing-release.json').read_text())
+          expected = pathlib.Path('.build/release-validation/release-notes.md').read_text()
+          if existing['body'].strip() != expected.strip():
+              raise SystemExit('Existing release notes differ from the accepted source')
+          PY
+          if ! jq -e '.assets[] | select(.name == "validation-evidence.tar.gz")' .build/release-validation/existing-release.json >/dev/null; then
+            gh release upload "$RELEASE_TAG" "$evidence"
+          fi
+          mkdir -p .build/downloaded-evidence
+          gh release download "$RELEASE_TAG" --pattern validation-evidence.tar.gz --dir .build/downloaded-evidence
+          cmp "$evidence" .build/downloaded-evidence/validation-evidence.tar.gz
+          gh release edit "$RELEASE_TAG" --draft=false
