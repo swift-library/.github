@@ -78,7 +78,7 @@ jobs:
           PY
       - name: Validate the package
         env:
-          CHECK_COMMAND: ${{ needs.configure.outputs.command }}
+          CHECK_COMMAND: ${{ matrix.command || needs.configure.outputs.command }}
           VALIDATION_NAME: ${{ matrix.name }}
         run: |
           set -euo pipefail
