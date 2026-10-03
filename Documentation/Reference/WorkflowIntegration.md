@@ -3,7 +3,9 @@
 Package-local `.github/release.json` owns the version file and extraction pattern,
 changelog path, check command, CI matrix and supported platform generations.
 The check command runs in the caller's checkout. Each matrix entry defines a
-unique name, hosted runner and optional installed Xcode version.
+unique name, hosted runner and optional installed Xcode version and check command.
+Use a format-only entry with a consistent formatter toolchain, and compiler-check
+entries for each supported compiler. All entries must pass for acceptance.
 
 `swift-package-ci.yml` accepts a configuration path and optional source ref. It
 checks out one commit, runs the declared matrix with read permissions, preserves
