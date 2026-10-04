@@ -33,7 +33,7 @@ and releases, so you can adopt one package without the others.
 | | Repository |
 | --- | --- |
 | <img src="https://raw.githubusercontent.com/swift-library/swift-package-template/HEAD/Documentation/Assets/Logo.svg" width="40" alt=""> | **[swift-package-template](https://github.com/swift-library/swift-package-template)**<br>The swift-library repository template for new Swift packages, with release checks, CI, and maintenance defaults in place. |
-| <img src="https://raw.githubusercontent.com/swift-library/skills/HEAD/Documentation/Assets/Logo.svg" width="40" alt=""> | **[skills](https://github.com/swift-library/skills)**<br>Skills for Claude and Codex that organize the documentation of Swift package repositories. |
+| <img src="https://raw.githubusercontent.com/swift-library/skills/HEAD/Documentation/Assets/Logo.svg" width="40" alt=""> | **[skills](https://github.com/swift-library/skills)**<br>Claude and Codex skills for Swift packages, Apple frameworks, SwiftUI and UIKit, developer tooling, and release engineering. |
 
 ### Standards
 
