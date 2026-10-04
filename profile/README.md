@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="Assets/Banner.svg" alt="The stacked icons of the swift-library packages and tools in a row">
+  <img src="Assets/Logo.svg" width="128" alt="swift-library logo">
 </p>
 
 <p align="center">
