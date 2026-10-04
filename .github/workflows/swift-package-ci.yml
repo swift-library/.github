@@ -76,11 +76,22 @@ jobs:
           else:
               raise SystemExit('Requested Xcode is not installed: ' + expected)
           PY
-      - name: Select the declared Swift toolchain
+      - name: Install the declared macOS Swift toolchain
         if: matrix.swift != ''
-        uses: swift-actions/setup-swift@7ca6abe6b3b0e8b5421b88be48feee39cbf52c6a # v2.4.0
-        with:
-          swift-version: ${{ matrix.swift }}
+        env:
+          SWIFT_VERSION: ${{ matrix.swift }}
+        run: |
+          set -euo pipefail
+          [[ "$RUNNER_OS" == macOS ]]
+          [[ "$SWIFT_VERSION" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]
+          package="$RUNNER_TEMP/swift-$SWIFT_VERSION.pkg"
+          curl --fail --location --retry 3 --output "$package" \
+            "https://download.swift.org/swift-$SWIFT_VERSION-release/xcode/swift-$SWIFT_VERSION-RELEASE/swift-$SWIFT_VERSION-RELEASE-osx.pkg"
+          pkgutil --check-signature "$package"
+          sudo installer -pkg "$package" -target /
+          toolchain="/Library/Developer/Toolchains/swift-$SWIFT_VERSION-RELEASE.xctoolchain/usr/bin"
+          "$toolchain/swift" --version
+          echo "$toolchain" >> "$GITHUB_PATH"
       - name: Validate the package
         env:
           CHECK_COMMAND: ${{ matrix.command || needs.configure.outputs.command }}
