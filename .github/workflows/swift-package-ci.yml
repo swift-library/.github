@@ -76,6 +76,11 @@ jobs:
           else:
               raise SystemExit('Requested Xcode is not installed: ' + expected)
           PY
+      - name: Select the declared Swift toolchain
+        if: matrix.swift != ''
+        uses: swift-actions/setup-swift@7ca6abe6b3b0e8b5421b88be48feee39cbf52c6a # v2.4.0
+        with:
+          swift-version: ${{ matrix.swift }}
       - name: Validate the package
         env:
           CHECK_COMMAND: ${{ matrix.command || needs.configure.outputs.command }}
