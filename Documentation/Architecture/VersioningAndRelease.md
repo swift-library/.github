@@ -69,7 +69,8 @@ platform evidence. Library consumers must work from the remote candidate and
 subsequently its SemVer tag using a fresh dependency graph.
 
 CI records commit/tree, dependency lock digest, toolchain, OS, SDK and validation
-logs. Preserve evidence as build artifacts and release attachments. A changed
+logs. Preserve evidence as build artifacts and release attachments; public
+attachments contain no workstation paths or user names. A changed
 source revision, dependency lock, configuration or checker needs fresh affected
 validation. Temporary execution state belongs in ignored build output.
 
