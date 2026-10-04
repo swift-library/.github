@@ -11,6 +11,7 @@
 
 - [Versioning and release](Documentation/Architecture/VersioningAndRelease.md)
 - [Workflow integration](Documentation/Reference/WorkflowIntegration.md)
+- [Design system](DESIGN.md): colors, type, and repository icon parameters
 - [Contributing](CONTRIBUTING.md)
 - [Security reporting](SECURITY.md)
 - [New package template](https://github.com/swift-library/swift-package-template)
