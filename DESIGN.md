@@ -282,3 +282,19 @@ changing its entry and replace the repository's `Logo.svg` and `Logo.png`.
   }
 }
 ```
+
+### Documentation pages
+
+Each package's DocC landing page shows its repository icon and a page color,
+following the DocC landing identity rule of the `swiftpm-docs` skill. The icon is
+a copy of the repository's `Logo.png`. DocC accepts only named page colors, so
+the color comes from the icon hue:
+
+| Icon hue (OKLCH) | Page color |
+| --- | --- |
+| 330 to 35 | `red` |
+| 35 to 75 | `orange` |
+| 75 to 115 | `yellow` |
+| 115 to 185 | `green` |
+| 185 to 265 | `blue` |
+| 265 to 330 | `purple` |
