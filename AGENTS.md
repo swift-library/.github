@@ -45,14 +45,14 @@ and a consuming repository workflow run before adoption.
 
 ## Task Route
 
-Read Documentation/Architecture/VersioningAndRelease.md before changing release
-policy. Workflow interfaces and adoption steps belong in
-Documentation/Reference/WorkflowIntegration.md. Use .github/workflows for
-reusable automation and package-local configuration for variable values.
+Read VERSIONING.md before changing release policy. Workflow interfaces and
+adoption steps belong in Documentation/Reference/WorkflowIntegration.md. Use
+.github/workflows for reusable automation and package-local configuration for
+variable values.
 
 ## Authority
 
-Documentation/Architecture owns current shared policy. Each caller repository
+VERSIONING.md owns current shared release policy. Each caller repository
 owns its source, package graph, version declaration and release evidence.
 
 ## Boundary Guardrails

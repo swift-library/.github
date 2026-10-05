@@ -39,7 +39,7 @@ and releases, so you can adopt one package without the others.
 
 Shared release, versioning, and CI conventions live in the
 [.github](https://github.com/swift-library/.github) repository. The
-[versioning and release policy](https://github.com/swift-library/.github/blob/master/Documentation/Architecture/VersioningAndRelease.md)
+[versioning and release policy](https://github.com/swift-library/.github/blob/master/VERSIONING.md)
 describes how packages declare compatibility and publish releases, and
 [workflow integration](https://github.com/swift-library/.github/blob/master/Documentation/Reference/WorkflowIntegration.md)
 explains how a repository adopts the shared workflows.
