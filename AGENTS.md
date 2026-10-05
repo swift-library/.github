@@ -45,7 +45,9 @@ and a consuming repository workflow run before adoption.
 
 ## Task Route
 
-Read VERSIONING.md before changing release policy. Workflow interfaces and
+Read VERSIONING.md before changing release policy. Read MAINTENANCE.md before
+changing a GitHub setting, ruleset, App, or required check, and update it in
+the same pull request. Workflow interfaces and
 adoption steps belong in Documentation/Reference/WorkflowIntegration.md. Use
 .github/workflows for reusable automation and package-local configuration for
 variable values.

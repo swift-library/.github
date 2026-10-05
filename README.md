@@ -13,6 +13,7 @@
 - [Workflow integration](Documentation/Reference/WorkflowIntegration.md)
 - [Design system](DESIGN.md): colors, type, and repository icon parameters
 - [Contributing](CONTRIBUTING.md)
+- [Maintenance](MAINTENANCE.md): change flow, GitHub settings, and automatic review
 - [Security reporting](SECURITY.md)
 - [New package template](https://github.com/swift-library/swift-package-template)
 
