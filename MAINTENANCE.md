@@ -39,6 +39,11 @@ Each workflow declares the permissions it needs.
 - `Immutable release tags` on `v*` tags, retaining the organization-admin
   exception declared in [VERSIONING.md](VERSIONING.md#immutable-tags).
 
+These rulesets own branch protection. Legacy branch-protection rules are absent;
+overlapping rules can otherwise retain a branch lock or a different approval
+requirement. Migrate a legacy rule only after verifying the active ruleset,
+including its required checks, signatures and pull-request requirements.
+
 | Repository | Required checks |
 | --- | --- |
 | `.github` | None yet |
@@ -77,6 +82,7 @@ The checker reads metadata only and never retrieves secret values.
 {
   "organization": "swift-library",
   "default_branch": "master",
+  "legacy_branch_protection": null,
   "merge": {
     "allow_squash_merge": true,
     "allow_merge_commit": false,
