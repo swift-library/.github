@@ -48,8 +48,9 @@ record, the declared owner identity, and attribution rules. It scans added
 lines and paths, then invokes the caller's `Scripts/validate-version` when that
 file exists. An initial push checks the complete initial history.
 
-The `allow-terms` input lists product names required by the repository, one per
-line. It does not exempt private paths or plan files. `allow-bots` lists bot
+The `allow-terms` input lists identifiers and product names required by the
+repository, one per line. A pagination cursor or CSS cursor keyword retains
+its own meaning. It does not exempt private paths or plan files. `allow-bots` lists bot
 logins permitted for author or committer identity; their commits must still be
 Verified. Keep both lists limited to the repository's actual public surface.
 Shared policy sources and their tests name all supported tools, so this
