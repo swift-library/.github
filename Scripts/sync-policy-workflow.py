@@ -45,7 +45,7 @@ jobs:
 
 def rendered():
     script = (ROOT / "Scripts/check-policy.py").read_text()
-    return PREFIX + "".join("          " + line + "\n" for line in script.splitlines()) + "          PY\n"
+    return PREFIX + "".join(("          " + line if line else "") + "\n" for line in script.splitlines()) + "          PY\n"
 
 
 def main():

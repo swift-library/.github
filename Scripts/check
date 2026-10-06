@@ -3,6 +3,7 @@
 set -eu
 cd "$(dirname "$0")/.."
 python3 Scripts/sync-policy-workflow.py --check
+python3 Scripts/sync-evidence-workflow.py --check
 python3 -B -m unittest discover -s Tests -v
 actionlint .github/workflows/*.yml
-git diff --check
+git diff --check HEAD

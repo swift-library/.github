@@ -68,3 +68,21 @@ read access. That check compares live merge settings, token permissions,
 rulesets, credential metadata and App installations with the declaration in
 `MAINTENANCE.md`. A permission or API failure is an unverified result and exits
 nonzero; the checker never changes settings or reads secret values.
+
+## Validation evidence
+
+The shared package CI normalizes the current checkout, home and temporary
+paths in UTF-8 `.log` files before uploading artifacts. SwiftPM's captured
+manifest root is made relative to the package; dependency locations retain
+their values and are checked. The gate rejects remaining
+private execution paths and plan references in UTF-8 evidence, including the
+contents of compressed DocC and nested evidence archives. Binary artifacts
+retain their bytes; they are not interpreted as text. Symlinks and unsafe tar
+members fail the gate. A failed gate prevents the evidence upload and fails
+validation.
+
+`Scripts/check-evidence.py` owns this gate. Run
+`python3 Scripts/sync-evidence-workflow.py` after editing it; `Scripts/check`
+verifies the embedded reusable-workflow copy. Package producers should still
+emit portable logs locally. The shared gate enforces the upload boundary for
+all package consumers and preserves meaningful product and dependency names.

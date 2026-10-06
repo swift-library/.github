@@ -35,14 +35,14 @@ jobs:
           #!/usr/bin/env python3
           # SPDX-License-Identifier: Apache-2.0 WITH Swift-exception
           """Validate the source range of a pull request or default-branch push."""
-          
+
           import json
           import os
           from pathlib import Path
           import re
           import subprocess
           import sys
-          
+
           OWNER_EMAIL = "10173746+showxu@users.noreply.github.com"
           ZERO_SHA = "0" * 40
           TRAILER = re.compile(
@@ -51,17 +51,17 @@ jobs:
           PRIVATE_PATH = re.compile(r"/(?:Users|home)/[^/\s]+/|\.(?:agent|workspace)/")
           PLAN = re.compile(r"(?:\b[^\s/]+\.plan\.md\b|\bPLANS\.md\b)", re.I)
           AGENT = re.compile(r"\b(ChatGPT|Codex|Cursor|Claude)\b", re.I)
-          
-          
+
+
           def git(*arguments):
               return subprocess.check_output(["git", *arguments], text=True, stdin=subprocess.DEVNULL)
-          
-          
+
+
           def api_commit(repository, sha):
               return json.loads(subprocess.check_output(
                   ["gh", "api", f"repos/{repository}/commits/{sha}"], text=True))
-          
-          
+
+
           def commit_findings(sha, record, allow_bots):
               commit = record["commit"]
               findings = []
@@ -78,8 +78,8 @@ jobs:
               if TRAILER.search(commit["message"]):
                   findings.append(f"{sha}: attribution trailer or tool attribution in commit message")
               return findings
-          
-          
+
+
           def content_findings(path, number, text, allow_terms):
               reasons = []
               if PRIVATE_PATH.search(text):
@@ -91,8 +91,8 @@ jobs:
               if terms:
                   reasons.append("unapproved product/tool term: " + ", ".join(terms))
               return [f"{path}:{number}: {reason}" for reason in reasons]
-          
-          
+
+
           def added_lines(patch):
               number = None
               for line in patch.splitlines():
@@ -105,16 +105,16 @@ jobs:
                           number += 1
                       elif line.startswith(" "):
                           number += 1
-          
-          
+
+
           def source_range(event, name):
               if name == "pull_request":
                   return event["pull_request"]["base"]["sha"], event["pull_request"]["head"]["sha"]
               if name == "push" and not event.get("deleted", False):
                   return event["before"], event["after"]
               raise ValueError("Policy requires a pull_request or non-deletion push event")
-          
-          
+
+
           def check_range(repository, base, head, allow_terms, allow_bots, fetch_commit=api_commit):
               for sha in (base, head):
                   if not re.fullmatch(r"[0-9a-f]{40}", sha):
@@ -127,7 +127,7 @@ jobs:
               findings = []
               for sha in commits:
                   findings.extend(commit_findings(sha, fetch_commit(repository, sha), allow_bots))
-          
+
               if new_branch:
                   comparison = git("hash-object", "-t", "tree", "--stdin").strip()
               else:
@@ -140,8 +140,8 @@ jobs:
                   for number, line in added_lines(patch):
                       findings.extend(content_findings(path, number, line, allow_terms))
               return findings
-          
-          
+
+
           def main():
               event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text())
               base, head = source_range(event, os.environ["GITHUB_EVENT_NAME"])
@@ -156,8 +156,8 @@ jobs:
                   subprocess.run([str(validator)], check=True)
               print("policy ok")
               return 0
-          
-          
+
+
           if __name__ == "__main__":
               try:
                   sys.exit(main())
