@@ -39,7 +39,7 @@ class EvidenceTests(unittest.TestCase):
 
     def test_unknown_paths_and_plans_fail_with_location(self):
         (self.root / 'metadata.json').write_text('{"path":"/' + 'home' + '/someone/private"}\n')
-        (self.root / 'check.log').write_text('unrelated.plan.md\n')
+        (self.root / 'check.log').write_text('unrelated.' + 'plan.md\n')
         errors = evidence.check(self.root, [])
         self.assertEqual(len(errors), 2)
         self.assertTrue(any('metadata.json:1:' in error for error in errors))
