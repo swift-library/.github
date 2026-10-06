@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0 WITH Swift-exception
 from copy import deepcopy
 import importlib.util
+import json
 from pathlib import Path
+import subprocess
 import unittest
 from unittest.mock import patch
 
@@ -47,6 +49,32 @@ class SettingsTests(unittest.TestCase):
                 patch.object(settings, "check_actions", return_value=[]):
             findings = settings.check_repository(repository, self.declared, {})
         self.assertEqual(findings, ["repos/swift-library/swift-gyb: missing required-check declaration"])
+
+    def test_only_explicit_unprotected_branch_response_means_absence(self):
+        response = {"status": "404", "message": "Branch not protected"}
+        failure = subprocess.CalledProcessError(1, ["gh"], output=json.dumps(response))
+        with patch.object(settings, "gh", side_effect=failure):
+            self.assertIsNone(settings.legacy_protection("repos/example/package", "master"))
+        for response in ({"status": "404", "message": "Not Found"},
+                         {"status": "403", "message": "Resource not accessible"}):
+            failure = subprocess.CalledProcessError(1, ["gh"], output=json.dumps(response))
+            with patch.object(settings, "gh", side_effect=failure):
+                with self.assertRaises(subprocess.CalledProcessError):
+                    settings.legacy_protection("repos/example/package", "master")
+
+    def test_overlapping_legacy_rule_is_reported_despite_matching_rulesets(self):
+        repository = {"name": "swift-gyb", "default_branch": "master"}
+        branch, tag = settings.expected_rulesets(self.declared, self.checks["swift-gyb"])
+        path = "repos/swift-library/swift-gyb"
+        responses = {path: self.declared["merge"],
+                     path + "/actions/permissions/workflow": self.declared["workflow_token"],
+                     path + "/rulesets/1": branch, path + "/rulesets/2": tag}
+        with patch.object(settings, "gh", side_effect=lambda url: responses[url]), \
+                patch.object(settings, "check_actions", return_value=[]), \
+                patch.object(settings, "collection", return_value=[{"id": 1}, {"id": 2}]), \
+                patch.object(settings, "legacy_protection", return_value={"lock_branch": {"enabled": True}}):
+            findings = settings.check_repository(repository, self.declared, self.checks)
+        self.assertEqual(findings, [path + ".legacy_branch_protection: differs from declaration"])
 
 
 if __name__ == "__main__":

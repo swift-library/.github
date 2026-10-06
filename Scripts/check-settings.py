@@ -47,6 +47,19 @@ def collection(path, key=None):
     return [item for page in pages for item in (page[key] if key else page)]
 
 
+def legacy_protection(path, branch):
+    try:
+        return gh(path + "/branches/" + branch + "/protection")
+    except subprocess.CalledProcessError as error:
+        try:
+            response = json.loads(error.output)
+        except (TypeError, ValueError):
+            raise error
+        if str(response.get("status")) == "404" and response.get("message") == "Branch not protected":
+            return None
+        raise
+
+
 def compare(label, actual, expected):
     if isinstance(expected, dict):
         if not isinstance(actual, dict):
@@ -104,6 +117,9 @@ def check_repository(repository, settings, checks):
     if name not in checks:
         findings.append(path + ": missing required-check declaration")
         return findings
+    findings += compare(path + ".legacy_branch_protection",
+                        legacy_protection(path, repository["default_branch"]),
+                        settings["legacy_branch_protection"])
     actual = [gh(path + "/rulesets/" + str(rule["id"])) for rule in collection(path + "/rulesets?per_page=100")]
     expected = expected_rulesets(settings, checks[name])
     if sorted(x["name"] for x in actual) != sorted(x["name"] for x in expected):
