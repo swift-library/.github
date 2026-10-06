@@ -423,8 +423,9 @@ appearances and web sizes derive from these layers and this entry.
       "vivid": 1.1,
       "custom_glyph": {
         "style": "stroke",
-        "width": 0.14,
-        "d": "M-0.58 -0.86 H0.22 L0.60 -0.48 V0.86 H-0.58 Z M0.22 -0.86 V-0.48 H0.60 M-0.32 -0.10 H0.34 M-0.32 0.20 H0.34 M-0.32 0.50 H0.10"
+        "width": 14,
+        "transform": "scale(0.01)",
+        "d": "M-58 -86 H22 L60 -48 V86 H-58 Z M22 -86 V-48 H60 M-32 -10 H34 M-32 20 H34 M-32 50 H10"
       }
     }
   },
