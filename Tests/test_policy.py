@@ -60,7 +60,7 @@ class PolicyTests(unittest.TestCase):
             try:
                 subprocess.run(["git", "init", "-q"], check=True)
                 def commit(text):
-                    Path("sample.txt").write_text(text)
+                    Path("sample.txt").write_bytes(text if isinstance(text, bytes) else text.encode())
                     policy.git("add", "sample.txt")
                     policy.git("-c", "user.name=Fixture", "-c", "user.email=fixture@example.test",
                                "-c", "commit.gpgsign=false", "-c", "core.hooksPath=/dev/null", "commit", "-qm", "fix: fixture")
@@ -70,6 +70,11 @@ class PolicyTests(unittest.TestCase):
                 head = commit("clean\n/" + "home/fixture/private\n")
                 findings = policy.check_range("example/repo", base, head, set(), set(), lambda *_: record())
                 self.assertEqual(findings, ["sample.txt:2: private execution path"])
+                byte_fixture = commit(b"invalid UTF-8: \xfa\n")
+                self.assertEqual(policy.check_range("example/repo", head, byte_fixture, set(), set(), lambda *_: record()), [])
+                unsafe_fixture = commit(b"invalid UTF-8: \xfa\n/" + b"home/fixture/private\n")
+                self.assertEqual(policy.check_range("example/repo", byte_fixture, unsafe_fixture, set(), set(), lambda *_: record()),
+                                 ["sample.txt:2: private execution path"])
             finally:
                 os.chdir(previous)
 
