@@ -46,19 +46,21 @@ including its required checks, signatures and pull-request requirements.
 
 | Repository | Required checks |
 | --- | --- |
-| `.github` | None yet |
-| `skills` | `validate-commit-messages` |
+| `.github` | `policy / policy`, `result` |
+| `skills` | `policy / policy`, `result` |
 | `swift-library.github.io` | `policy / policy`, `result` |
 | `homebrew-tap` | `verify (macos-26, 26.6)`, `verify (macos-15, 26.0.1, 6.3.3)` |
-| `swift-sh` | `validate / configure`, `validate / strict-format`, `validate / linux-swift-6.3`, `validate / macos-15-swift-6.3`, `validate / macos-26-swift-6.3`, `validate-commit-messages` |
+| `swift-sh` | `policy / policy`, `validate / result` |
 | `swift-codex` | `Repository quality`, `Swift 6.2 baseline`, `Current hosted Swift`, `Windows products`, `Windows native process runtime`, `AppServer and MCP binary integration`, `validate-commit-messages` |
-| `swift-package-template` | `validate / configure`, `validate / strict-format`, `validate / macos-15-swift-6.0`, `validate / macos-26-swift-6.3`, `validate-commit-messages` |
+| `swift-package-template` | `policy / policy`, `validate / result` |
 | `swift-data-writable` | `validate / configure`, `validate / strict-format`, `validate / macos-15-swift-6.2`, `validate / macos-26-swift-6.3`, `validate-commit-messages` |
-| `swift-benchmark` | `validate / configure`, `validate / strict-format`, `validate / macos-15-swift-6.0`, `validate / macos-26-swift-6.3`, `validate-commit-messages` |
-| `swift-redux` | `validate / configure`, `validate / ios-build`, `validate / macos-15-swift-6.0`, `validate / macos-26-swift-6.3` |
-| `swift-userdefault` | `validate / configure`, `validate / ios-build`, `validate / macos-15-swift-6.0`, `validate / macos-26-swift-6.3` |
-| `swift-gyb` | `validate / configure`, `validate / linux-swift-6.2`, `validate / macos-26-swift-6.3` |
-| `swift-semver` | `validate / configure`, `validate / strict-format`, `validate / linux-swift-6.0`, `validate / macos-15-swift-6.0`, `validate / macos-26-swift-6.3`, `validate-commit-messages` |
+| `swift-benchmark` | `policy / policy`, `validate / result` |
+| `swift-redux` | `policy / policy`, `validate / result` |
+| `swift-userdefault` | `policy / policy`, `validate / result` |
+| `swift-gyb` | `policy / policy`, `validate / result` |
+| `swift-semver` | `policy / policy`, `validate / result` |
+| `swift-pdf` | `policy / policy`, `validate / result` |
+| `swift-json-schema` | `policy / policy`, `validate / result` |
 
 A renamed or added CI job updates its ruleset and this table in the same
 sitting; until then every pull request in that repository waits on the old
