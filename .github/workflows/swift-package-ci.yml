@@ -18,6 +18,24 @@ permissions:
   contents: read
 
 jobs:
+  result:
+    runs-on: ubuntu-24.04
+    needs: [configure, check]
+    if: always()
+    steps:
+      - name: Require all validation jobs to succeed
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          jobs = json.loads(os.environ['RESULTS'])
+          failed = [name for name, job in jobs.items() if job['result'] != 'success']
+          if failed:
+              raise SystemExit('Validation did not succeed: ' + ', '.join(failed))
+          print('All validation jobs passed')
+          PY
+
   configure:
     runs-on: ubuntu-24.04
     outputs:

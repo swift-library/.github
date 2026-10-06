@@ -30,14 +30,14 @@ are off, and merged branches are deleted.
 workflows cannot approve pull requests, at organization and repository level.
 Each workflow declares the permissions it needs.
 
-**Rulesets.** Every public repository has two active rulesets with no bypass
-actors:
+**Rulesets.** Every public repository has two active rulesets:
 
-- `default branch` on `~DEFAULT_BRANCH`: `deletion`, `non_fast_forward`,
+- `default branch` on `~DEFAULT_BRANCH`, with no bypass actors: `deletion`, `non_fast_forward`,
   `required_signatures`, `pull_request` (squash only, zero approvals, review
   threads resolved), and `required_status_checks` for the checks below, each
   bound to GitHub Actions;
-- `Immutable release tags` on `v*` tags.
+- `Immutable release tags` on `v*` tags, retaining the organization-admin
+  exception declared in [VERSIONING.md](VERSIONING.md#immutable-tags).
 
 | Repository | Required checks |
 | --- | --- |
@@ -65,6 +65,81 @@ name.
 | ChatGPT Codex Connector | actions, contents, issues, pull requests, workflows: write; checks, statuses, metadata: read | All repositories | Managed by OpenAI | None in GitHub |
 
 No Actions secrets or variables exist at organization or repository level.
+
+### Settings declaration
+
+`Scripts/check-settings.py` reads this declaration and the required-check table
+above. The declaration owns exact API parameters; the table owns job names.
+Changes to either must accompany the corresponding GitHub setting change.
+The checker reads metadata only and never retrieves secret values.
+
+```json
+{
+  "organization": "swift-library",
+  "default_branch": "master",
+  "merge": {
+    "allow_squash_merge": true,
+    "allow_merge_commit": false,
+    "allow_rebase_merge": false,
+    "delete_branch_on_merge": true,
+    "squash_merge_commit_title": "PR_TITLE",
+    "squash_merge_commit_message": "COMMIT_MESSAGES"
+  },
+  "workflow_token": {
+    "default_workflow_permissions": "read",
+    "can_approve_pull_request_reviews": false
+  },
+  "branch_ruleset": {
+    "name": "default branch",
+    "target": "branch",
+    "enforcement": "active",
+    "bypass_actors": [],
+    "conditions": {"ref_name": {"include": ["~DEFAULT_BRANCH"], "exclude": []}},
+    "rules": [
+      {"type": "deletion"},
+      {"type": "non_fast_forward"},
+      {"type": "required_signatures"},
+      {"type": "pull_request", "parameters": {
+        "allowed_merge_methods": ["squash"],
+        "required_approving_review_count": 0,
+        "dismiss_stale_reviews_on_push": false,
+        "dismissal_restriction": {"allowed_actors": [], "enabled": false},
+        "require_code_owner_review": false,
+        "require_extra_approval_for_unattributed_changes": true,
+        "require_last_push_approval": false,
+        "required_review_thread_resolution": true,
+        "required_reviewers": []
+      }}
+    ]
+  },
+  "status_checks": {
+    "integration_id": 15368,
+    "strict_required_status_checks_policy": false,
+    "do_not_enforce_on_create": false
+  },
+  "tag_ruleset": {
+    "name": "Immutable release tags",
+    "target": "tag",
+    "enforcement": "active",
+    "bypass_actors": [{"actor_id": null, "actor_type": "OrganizationAdmin", "bypass_mode": "always"}],
+    "conditions": {"ref_name": {"include": ["refs/tags/v*"], "exclude": []}},
+    "rules": [{"type": "deletion"}, {"type": "update"}, {"type": "non_fast_forward"}]
+  },
+  "organization_actions": {"secrets": [], "variables": {}},
+  "repository_actions": {"secrets": [], "variables": {}},
+  "repository_action_overrides": {},
+  "apps": {
+    "chatgpt-codex-connector": {
+      "repository_selection": "all",
+      "permissions": {
+        "actions": "write", "contents": "write", "issues": "write",
+        "pull_requests": "write", "workflows": "write", "checks": "read",
+        "statuses": "read", "metadata": "read"
+      }
+    }
+  }
+}
+```
 
 ## Automatic Review
 
