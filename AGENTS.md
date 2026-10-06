@@ -66,3 +66,23 @@ records. Preserve existing source ownership and historical records.
 ## Validation
 
 Run actionlint for workflow changes and test a pinned workflow from a consumer.
+
+## Code Review Rules
+
+### Shared policy and ownership
+
+- Flag shared policy that fixes a package-specific version, platform window or
+  toolchain outside the owning package. Safe path: derive variable values from
+  caller configuration and state only the shared invariant here.
+
+### Workflow compatibility
+
+- Flag a reusable workflow interface change without a compatible caller path
+  and consuming-repository evidence. Safe path: validate the pinned workflow
+  in a caller and document the adoption requirements.
+
+### Claims and release integrity
+
+- Flag an acceptance or release claim without evidence for the identified
+  source, or instructions that could replace an immutable published identity.
+  Safe path: report the actual validation state and follow `VERSIONING.md`.
