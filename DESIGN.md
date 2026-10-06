@@ -417,7 +417,7 @@ appearances and web sizes derive from these layers and this entry.
       "mode": "deepen",
       "bands": 3,
       "texture": "lines",
-      "glyph_rotation": -45,
+      "glyph_rotation": 0,
       "glyph_scale": 0.33,
       "drift": 0,
       "vivid": 1.1,
