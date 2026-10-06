@@ -143,11 +143,11 @@ The checker reads metadata only and never retrieves secret values.
 
 ## Automatic Review
 
-Codex code review runs on every pull request, with Automatic review turned on
-in Codex settings for each repository. It reads the `## Code Review Rules`
-section of the repository's `AGENTS.md`, and the nested `AGENTS.md` nearest to
-each changed file. Its findings are advisory, but the ruleset requires every
-review thread to be resolved before merging.
+Codex is the selected advisory reviewer. Its GitHub App is installed on all
+repositories; automatic review activation is pending in Codex settings.
+Repository rules live in the `## Code Review Rules` section of `AGENTS.md`,
+with area-specific rules in nested guides. Required checks enforce the merge
+gate, and the ruleset requires every review thread to be resolved before merging.
 
 ## Open Items
 
