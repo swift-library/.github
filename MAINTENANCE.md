@@ -48,6 +48,7 @@ including its required checks, signatures and pull-request requirements.
 | --- | --- |
 | `.github` | None yet |
 | `skills` | `validate-commit-messages` |
+| `swift-library.github.io` | `policy / policy`, `result` |
 | `homebrew-tap` | `verify (macos-26, 26.6)`, `verify (macos-15, 26.0.1, 6.3.3)` |
 | `swift-sh` | `validate / configure`, `validate / strict-format`, `validate / linux-swift-6.3`, `validate / macos-15-swift-6.3`, `validate / macos-26-swift-6.3`, `validate-commit-messages` |
 | `swift-codex` | `Repository quality`, `Swift 6.2 baseline`, `Current hosted Swift`, `Windows products`, `Windows native process runtime`, `AppServer and MCP binary integration`, `validate-commit-messages` |
