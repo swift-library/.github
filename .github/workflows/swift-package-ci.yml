@@ -107,9 +107,11 @@ jobs:
             "https://download.swift.org/swift-$SWIFT_VERSION-release/xcode/swift-$SWIFT_VERSION-RELEASE/swift-$SWIFT_VERSION-RELEASE-osx.pkg"
           pkgutil --check-signature "$package"
           sudo installer -pkg "$package" -target /
-          toolchain="/Library/Developer/Toolchains/swift-$SWIFT_VERSION-RELEASE.xctoolchain/usr/bin"
-          "$toolchain/swift" --version
-          echo "$toolchain" >> "$GITHUB_PATH"
+          toolchain="/Library/Developer/Toolchains/swift-$SWIFT_VERSION-RELEASE.xctoolchain"
+          "$toolchain/usr/bin/swift" --version
+          echo "$toolchain/usr/bin" >> "$GITHUB_PATH"
+          identifier=$(plutil -extract CFBundleIdentifier raw "$toolchain/Info.plist")
+          echo "TOOLCHAINS=$identifier" >> "$GITHUB_ENV"
       - name: Validate the package
         env:
           CHECK_COMMAND: ${{ matrix.command || needs.configure.outputs.command }}
