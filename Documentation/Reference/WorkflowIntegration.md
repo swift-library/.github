@@ -9,6 +9,9 @@ its bundle identifier selects the same compiler for `swift`, `xcrun` and
 `xcodebuild`. That Xcode still owns the Darwin SDK. Validate compiler and SDK compatibility together.
 Use a format-only entry with a consistent formatter toolchain, and compiler-check
 entries for each supported compiler. All entries must pass for acceptance.
+Each entry may set `timeout_minutes` to an integer from 1 to 360; omitted values
+use 45 minutes. The package owns this execution budget for its validation workload.
+Exceeding the budget fails the job and the aggregate validation result.
 
 `swift-package-ci.yml` accepts a configuration path and optional source ref. It
 checks out one commit, runs the declared matrix with read permissions, preserves

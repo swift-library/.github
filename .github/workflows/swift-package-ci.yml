@@ -57,6 +57,10 @@ jobs:
           matrix = config['ci']
           if not matrix.get('include'):
               raise SystemExit('The CI matrix must have at least one entry')
+          for entry in matrix['include']:
+              timeout = entry.setdefault('timeout_minutes', 45)
+              if type(timeout) is not int or not 1 <= timeout <= 360:
+                  raise SystemExit('CI timeout_minutes must be an integer from 1 to 360')
           with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
               print('matrix=' + json.dumps(matrix, separators=(',', ':')), file=output)
               print('command=' + config['check_command'], file=output)
@@ -67,7 +71,7 @@ jobs:
     needs: configure
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 45
+    timeout-minutes: ${{ matrix.timeout_minutes }}
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.configure.outputs.matrix) }}
