@@ -49,11 +49,11 @@ including its required checks, signatures and pull-request requirements.
 | `.github` | `policy / policy`, `result` |
 | `skills` | `policy / policy`, `result` |
 | `swift-library.github.io` | `policy / policy`, `result` |
-| `homebrew-tap` | `verify (macos-26, 26.6)`, `verify (macos-15, 26.0.1, 6.3.3)` |
+| `homebrew-tap` | `policy / policy`, `result` |
 | `swift-sh` | `policy / policy`, `validate / result` |
-| `swift-codex` | `Repository quality`, `Swift 6.2 baseline`, `Current hosted Swift`, `Windows products`, `Windows native process runtime`, `integration / AppServer and MCP binary integration`, `validate-commit-messages` |
+| `swift-codex` | `policy / policy`, `result` |
 | `swift-package-template` | `policy / policy`, `validate / result` |
-| `swift-data-writable` | `validate / configure`, `validate / strict-format`, `validate / macos-15-swift-6.2`, `validate / macos-26-swift-6.3`, `validate-commit-messages` |
+| `swift-data-writable` | `policy / policy`, `validate / result` |
 | `swift-benchmark` | `policy / policy`, `validate / result` |
 | `swift-redux` | `policy / policy`, `validate / result` |
 | `swift-userdefault` | `policy / policy`, `validate / result` |
