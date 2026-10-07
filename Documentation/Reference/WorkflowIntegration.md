@@ -5,7 +5,8 @@ changelog path, check command, CI matrix and supported platform generations.
 The check command runs in the caller's checkout. Each matrix entry defines a
 unique name, hosted runner and optional installed Xcode version, macOS Swift toolchain version and check command.
 The `swift` field installs an official release toolchain after selecting Xcode;
-that Xcode still owns the Darwin SDK. Validate compiler and SDK compatibility together.
+its bundle identifier selects the same compiler for `swift`, `xcrun` and
+`xcodebuild`. That Xcode still owns the Darwin SDK. Validate compiler and SDK compatibility together.
 Use a format-only entry with a consistent formatter toolchain, and compiler-check
 entries for each supported compiler. All entries must pass for acceptance.
 
