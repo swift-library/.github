@@ -3,6 +3,7 @@
 """Embed the policy checker in its trusted reusable workflow; --check detects drift."""
 
 import argparse
+import importlib.util
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -14,10 +15,6 @@ on:
     inputs:
       allow-terms:
         description: Newline-separated product names required by this repository
-        type: string
-        default: ''
-      allow-bots:
-        description: Newline-separated GitHub bot logins permitted for commit identities
         type: string
         default: ''
 
@@ -33,11 +30,10 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - name: Check source identity, content and version
+      - name: Check pull request title and source policy
         env:
           GH_TOKEN: ${{ github.token }}
           ALLOW_TERMS: ${{ inputs.allow-terms }}
-          ALLOW_BOTS: ${{ inputs.allow-bots }}
         run: |
           python3 - <<'PY'
 """
@@ -45,7 +41,10 @@ jobs:
 
 def rendered():
     script = (ROOT / "Scripts/check-policy.py").read_text()
-    return PREFIX + "".join(("          " + line if line else "") + "\n" for line in script.splitlines()) + "          PY\n"
+    spec = importlib.util.spec_from_file_location("versions", ROOT / "Scripts/sync-version-workflows.py")
+    versions = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(versions)
+    return PREFIX + "".join(("          " + line if line else "") + "\n" for line in script.splitlines()) + "          PY\n" + versions.rendered("policy")
 
 
 def main():
