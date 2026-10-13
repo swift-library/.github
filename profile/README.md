@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/swift-library/.github/master/Documentation/Assets/Logo.svg" width="128" alt="swift-library logo">
+  <img src="https://raw.githubusercontent.com/swift-library/.github/master/profile/Assets/Banner.svg" width="100%" alt="Swift Library package icons">
 </p>
 
 <p align="center">
@@ -8,6 +8,11 @@
 
 Each repository owns its products, compiler requirements, supported platforms,
 and releases, so you can adopt one package without the others.
+
+[Documentation](https://swift-library.github.io/) ·
+[Contributing](https://github.com/swift-library/.github/blob/master/CONTRIBUTING.md) ·
+[Security](https://github.com/swift-library/.github/blob/master/SECURITY.md) ·
+[Support](https://github.com/swift-library/.github/blob/master/SUPPORT.md)
 
 ### Packages
 
