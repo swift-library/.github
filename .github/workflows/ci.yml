@@ -5,12 +5,16 @@ on:
     branches: [master]
   pull_request:
     types: [opened, synchronize, reopened, edited]
+  schedule:
+    - cron: '17 3 * * 1'
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   policy:
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
     uses: ./.github/workflows/policy.yml
     with:
       allow-terms: |
@@ -19,7 +23,27 @@ jobs:
         Cursor
         Claude
 
+  icons:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check out the icon generator
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: showxu/skills
+          ref: 4e58f28f30999badff3581fcd6945521baec9698
+          path: .build/icon-generator
+          persist-credentials: false
+      - name: Lint palettes and check published logos
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 -B Scripts/check-icons.py --generator .build/icon-generator/skills/apple-framework-icon-design/scripts/design_icons.py
+
   result:
+    needs: icons
+    if: always()
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -31,5 +55,9 @@ jobs:
         run: |
           go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
           echo "$GOBIN" >> "$GITHUB_PATH"
+      - name: Require published icons to match
+        env:
+          ICON_RESULT: ${{ needs.icons.result }}
+        run: test "$ICON_RESULT" = success
       - name: Validate shared standards
         run: Scripts/check

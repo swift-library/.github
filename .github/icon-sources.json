@@ -1,0 +1,77 @@
+[
+  {
+    "repository": "swift-library/swift-userdefault",
+    "icon": "swift-userdefault",
+    "path": "Documentation/Assets/Logo.svg"
+  },
+  {
+    "repository": "swift-library/.github",
+    "icon": "swift-library",
+    "path": "Documentation/Assets/Logo.svg"
+  },
+  {
+    "repository": "swift-library/swift-benchmark",
+    "icon": "swift-benchmark",
+    "path": "Documentation/Assets/Logo.svg"
+  },
+  {
+    "repository": "swift-library/swift-package-template",
+    "icon": "swift-package-template",
+    "path": "Documentation/Assets/Logo.svg"
+  },
+  {
+    "repository": "swift-library/homebrew-tap",
+    "icon": "homebrew-tap",
+    "path": "Documentation/Assets/Logo.svg"
+  },
+  {
+    "repository": "swift-library/swift-appstoreconnect",
+    "icon": "swift-appstoreconnect",
+    "path": "Documentation/Assets/Logo.svg"
+  },
+  {
+    "repository": "swift-library/swift-semver",
+    "icon": "swift-semver",
+    "path": "Documentation/Assets/Logo.svg"
+  },
+  {
+    "repository": "swift-library/swift-sh",
+    "icon": "swift-sh",
+    "path": "Documentation/Assets/Logo.svg"
+  },
+  {
+    "repository": "swift-library/swift-gyb",
+    "icon": "swift-gyb",
+    "path": "Documentation/Assets/Logo.svg"
+  },
+  {
+    "repository": "swift-library/swift-data-writable",
+    "icon": "swift-data-writable",
+    "path": "Documentation/Assets/Logo.svg"
+  },
+  {
+    "repository": "swift-library/skills",
+    "icon": "skills",
+    "path": "Documentation/Assets/Logo.svg"
+  },
+  {
+    "repository": "swift-library/swift-codex",
+    "icon": "swift-codex",
+    "path": "Documentation/Assets/Logo.svg"
+  },
+  {
+    "repository": "swift-library/swift-json-schema",
+    "icon": "swift-json-schema",
+    "path": "Documentation/Assets/Logo.svg"
+  },
+  {
+    "repository": "swift-library/swift-redux",
+    "icon": "swift-redux",
+    "path": "Documentation/Assets/Logo.svg"
+  },
+  {
+    "repository": "swift-library/swift-pdf",
+    "icon": "swift-pdf",
+    "path": "Documentation/Assets/Logo.svg"
+  }
+]
