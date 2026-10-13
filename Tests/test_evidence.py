@@ -86,24 +86,6 @@ class EvidenceTests(unittest.TestCase):
         self.assertIn('validation.tar.gz!module.doccarchive.tar.gz!data/module.json:1:', errors[0])
         self.assertEqual(len(list(self.root.iterdir())), 1)
 
-    def test_nested_archive_text_is_normalized_and_metadata_retained(self):
-        checkout = '/' + 'home' + '/runner/package'
-        text = json.dumps({'source': checkout + '/Sources/Example.swift'}).encode()
-        nested = self.bundle('data/module.json', text, mode='w')
-        path = self.root / 'validation.tgz'
-        path.write_bytes(self.bundle('module.doccarchive.tar', nested))
-        self.assertEqual(evidence.check(self.root, [(checkout, '<package>')]), [])
-        with tarfile.open(path) as outer:
-            with tarfile.open(fileobj=io.BytesIO(outer.extractfile('module.doccarchive.tar').read())) as inner:
-                member = inner.getmember('data/module.json')
-                self.assertEqual((member.mode, member.mtime), (0o640, 42))
-                self.assertEqual(json.load(inner.extractfile(member)),
-                                 {'source': '<package>/Sources/Example.swift'})
-        before = path.read_bytes()
-        self.assertEqual(evidence.check(self.root, [(checkout, '<package>')]), [])
-        self.assertEqual(path.read_bytes(), before)
-        self.assertEqual(len(list(self.root.iterdir())), 1)
-
     def test_archive_binary_and_unchanged_archives_are_preserved(self):
         checkout = '/' + 'home' + '/runner/package'
         data = b'\xff' + checkout.encode()
@@ -113,15 +95,14 @@ class EvidenceTests(unittest.TestCase):
         self.assertEqual(evidence.check(self.root, [(checkout, '<package>')]), [])
         self.assertEqual(path.read_bytes(), archive)
 
-    def test_unknown_archive_paths_still_fail_after_normalization(self):
+    def test_archived_text_retains_published_digest_and_is_scanned(self):
         checkout = '/' + 'home' + '/runner/package'
-        text = (checkout + '/Source.swift\n/' + 'home' + '/someone/private').encode()
         path = self.root / 'validation.tar.gz'
-        archive = self.bundle('receipt.txt', text)
+        archive = self.bundle('receipt.txt', (checkout + '/Source.swift').encode())
         path.write_bytes(archive)
         errors = evidence.check(self.root, [(checkout, '<package>')])
         self.assertEqual(len(errors), 1)
-        self.assertIn('validation.tar.gz!receipt.txt:2:', errors[0])
+        self.assertIn('validation.tar.gz!receipt.txt:1:', errors[0])
         self.assertEqual(path.read_bytes(), archive)
 
     def test_symlinks_and_unsafe_archive_names_fail(self):

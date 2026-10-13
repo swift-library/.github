@@ -32,15 +32,11 @@ def normalize_text(data, replacements):
     return text.encode("utf-8")
 
 
-def normalize_archive(data, name, replacements, depth=0):
+def archive_findings(data, name, depth=0):
     if depth > 4:
-        return data, [f"{name}: nested archive depth exceeds the evidence check limit"]
+        return [f"{name}: nested archive depth exceeds the evidence check limit"]
     errors = []
-    changed = False
-    output = io.BytesIO()
-    mode = "w:gz" if name.endswith((".tar.gz", ".tgz")) else "w"
-    with tarfile.open(fileobj=io.BytesIO(data), mode="r:*") as archive, \
-            tarfile.open(fileobj=output, mode=mode) as normalized:
+    with tarfile.open(fileobj=io.BytesIO(data), mode="r:*") as archive:
         for member in archive:
             label = name + "!" + member.name
             path = PurePosixPath(member.name)
@@ -50,21 +46,14 @@ def normalize_archive(data, name, replacements, depth=0):
             if member.isfile():
                 content = archive.extractfile(member).read()
                 if member.name.endswith((".tar.gz", ".tgz", ".tar")):
-                    replacement, nested_errors = normalize_archive(content, label, replacements, depth + 1)
-                    errors.extend(nested_errors)
+                    errors.extend(archive_findings(content, label, depth + 1))
                 else:
-                    replacement = normalize_text(content, replacements)
-                    errors.extend(findings(replacement, label))
-                changed |= content != replacement
-                member.size = len(replacement)
-                normalized.addfile(member, io.BytesIO(replacement))
-            else:
-                normalized.addfile(member)
-    return (output.getvalue() if changed and not errors else data), errors
+                    errors.extend(findings(content, label))
+    return errors
 
 
 def check(directory, replacements):
-    """Normalize UTF-8 files and archive contents before checking for private paths."""
+    """Normalize UTF-8 files; preserve and scan compressed archive contents."""
     errors = []
     if not directory.is_dir():
         return ["Validation evidence directory is missing"]
@@ -92,8 +81,7 @@ def check(directory, replacements):
                 content = (json.dumps(manifest, indent=2) + "\n").encode()
         errors.extend(findings(name.encode(), name))
         if path.name.endswith((".tar.gz", ".tgz", ".tar")):
-            content, archive_errors = normalize_archive(content, name, replacements)
-            errors.extend(archive_errors)
+            errors.extend(archive_findings(content, name))
         else:
             content = normalize_text(content, replacements)
             errors.extend(findings(content, name))
