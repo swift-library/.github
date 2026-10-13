@@ -431,9 +431,9 @@ jobs:
 
           TOOL = {
               'repository': 'swift-library/swift-interface-distiller',
-              'version': '0.1.1',
-              'commit': '5fa695d358f5e01a9889a2da0d11ced0e20a2ee2',
-              'archive_sha256': '104b1c66a9490af7f9fff980506c0384e18743bbba34c41c5086883698434c43',
+              'version': '0.1.2',
+              'commit': '983b7af4052edd018c7d5becd5c91276a24c4fb3',
+              'archive_sha256': '1284fe74c84644525840e01e39d068c04a1e3e28275c6304cf84ae92fd3644fc',
           }
           ASSET = 'api-evidence.json'
           LIMIT = 256 * 1024 * 1024
