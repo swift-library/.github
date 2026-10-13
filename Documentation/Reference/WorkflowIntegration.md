@@ -123,3 +123,18 @@ validation.
 verifies the embedded reusable-workflow copy. Package producers should still
 emit portable logs locally. The shared gate enforces the upload boundary for
 all package consumers and preserves meaningful product and dependency names.
+
+## Published icon validation
+
+The shared standards CI checks repository icons on pull requests, master pushes,
+manual runs and weekly. Its `icons` job checks out `showxu/skills` at the reviewed
+full SHA declared in the workflow, lints `DESIGN.md`, and compares the published
+SVGs with that generator. The required `result` check also requires icon success.
+
+`.github/icon-sources.json` maps each design icon to its owning repository and
+canonical published path. It must cover every icon in the design family.
+`Scripts/check-icons.py --generator PATH` downloads those files from master into
+`.build/published-icons` and runs the generator's drift check. A missing file,
+API failure, palette finding or byte difference fails validation. It never
+updates a repository logo; each owning repository publishes regenerated assets
+through its own reviewed change.

@@ -53,6 +53,9 @@ key. Register that public key as a signing key on GitHub. Verify commits with
 `git verify-commit HEAD` and tags with `git verify-tag vX.Y.Z`.
 Release tags use the signed annotated format in [Versioning](VERSIONING.md#tags).
 
+The shared standards repository's `result` check includes published icon
+validation. The pinned generator and design family are also checked weekly.
+
 ## GitHub Settings
 
 **Merging.** Squash merge only, with the pull request title as the commit
