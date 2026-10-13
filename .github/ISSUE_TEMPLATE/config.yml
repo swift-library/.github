@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Support
+    url: https://github.com/swift-library/.github/blob/master/SUPPORT.md
+    about: Find documentation, usage help and private reporting routes.

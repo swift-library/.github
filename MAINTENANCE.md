@@ -6,38 +6,71 @@ file in the same pull request.
 
 ## Change Flow
 
-1. Work on a branch. Commits use the owner's name and noreply email and are
-   SSH-signed. Tool identities and attribution trailers never appear.
+1. Work on a branch. Maintainer commits use the owner's name and noreply email
+   and are SSH-signed. Attribution trailers never appear.
 2. Run the repository's own check before pushing, for a Swift package
    `Scripts/check`.
-3. Open a pull request against the default branch.
+3. Open a pull request against `master`. Its title and commit subjects follow
+   Conventional Commits: `type(scope)!: subject`, with optional scope and `!`.
+   Types are `build`, `chore`, `ci`, `docs`, `feat`, `fix`, `perf`, `refactor`,
+   `revert`, `style` and `test`.
 4. Merge only when every required check is green and every review thread is
    resolved: each automatic review finding is fixed or answered on the pull
    request.
 5. Squash-merge the reviewed head commit, for example
    `gh pr merge <number> --squash --match-head-commit <sha>`.
 
-A new repository is the one exception: its prepared, signed history is pushed
-once to the empty repository, and the ruleset is applied immediately after.
+External pull requests and bot-authored changes are welcome. Pull-request
+policy checks the title and added content. Default-branch push policy requires
+GitHub-verified commits committed by GitHub or the owner; it does not restrict
+the original author. Dependabot, updater Apps and GitHub Actions may author
+changes. Product names are allowed only through the caller's `allow-terms`.
+
+## Repository Scope
+
+All self-owned repositories use `master` and these shared standards. GitHub
+forks of upstream projects follow their upstream branch and tag conventions
+and are outside the organization rulesets.
+
+## Signing
+
+Configure signing locally in each repository, using the owner's registered SSH
+signing key. Do not change global Git configuration:
+
+```sh
+git config user.name showxu
+git config user.email 10173746+showxu@users.noreply.github.com
+git config gpg.format ssh
+git config user.signingkey ~/.ssh/signing_key.pub
+git config commit.gpgsign true
+git config tag.gpgsign true
+git config gpg.ssh.allowedSignersFile ~/.ssh/allowed_signers
+```
+
+Replace the key and allowed-signers paths with the local signing configuration.
+The allowed-signers file contains the signer's email followed by the SSH public
+key. Register that public key as a signing key on GitHub. Verify commits with
+`git verify-commit HEAD` and tags with `git verify-tag vX.Y.Z`.
+Release tags use the signed annotated format in [Versioning](VERSIONING.md#tags).
 
 ## GitHub Settings
 
 **Merging.** Squash merge only, with the pull request title as the commit
-subject and its commit messages as the body. Merge commits and rebase merges
+subject and an empty commit body. Merge commits and rebase merges
 are off, and merged branches are deleted.
 
 **Workflow token.** The default `GITHUB_TOKEN` permission is `read`, and
 workflows cannot approve pull requests, at organization and repository level.
 Each workflow declares the permissions it needs.
 
-**Rulesets.** Every public repository has two active rulesets:
+**Rulesets.** Every public self-owned repository has two active rulesets:
 
 - `default branch` on `~DEFAULT_BRANCH`, with no bypass actors: `deletion`, `non_fast_forward`,
   `required_signatures`, `pull_request` (squash only, zero approvals, review
   threads resolved), and `required_status_checks` for the checks below, each
   bound to GitHub Actions;
-- `Immutable release tags` on `v*` tags, retaining the organization-admin
-  exception declared in [VERSIONING.md](VERSIONING.md#immutable-tags).
+- `Immutable release tags` on `v*` tags, with no bypass actors, as required by
+  [VERSIONING.md](VERSIONING.md#immutable-tags).
 
 These rulesets own branch protection. Legacy branch-protection rules are absent;
 overlapping rules can otherwise retain a branch lock or a different approval
@@ -93,7 +126,7 @@ The checker reads metadata only and never retrieves secret values.
     "allow_rebase_merge": false,
     "delete_branch_on_merge": true,
     "squash_merge_commit_title": "PR_TITLE",
-    "squash_merge_commit_message": "COMMIT_MESSAGES"
+    "squash_merge_commit_message": "BLANK"
   },
   "workflow_token": {
     "default_workflow_permissions": "read",
@@ -131,7 +164,7 @@ The checker reads metadata only and never retrieves secret values.
     "name": "Immutable release tags",
     "target": "tag",
     "enforcement": "active",
-    "bypass_actors": [{"actor_id": null, "actor_type": "OrganizationAdmin", "bypass_mode": "always"}],
+    "bypass_actors": [],
     "conditions": {"ref_name": {"include": ["refs/tags/v*"], "exclude": []}},
     "rules": [{"type": "deletion"}, {"type": "update"}, {"type": "non_fast_forward"}]
   },
@@ -166,5 +199,3 @@ gate, and the ruleset requires every review thread to be resolved before merging
   organization-owned Updater App (`contents` and `pull_requests` write,
   installed only on `homebrew-tap`) that opens a pull request with auto-merge.
   The formula currently matches the latest `swift-sh` release.
-- Commits on default branches from before this flow are unsigned. They stay as
-  they are; history is not rewritten for signatures.

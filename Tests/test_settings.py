@@ -21,7 +21,8 @@ class SettingsTests(unittest.TestCase):
         self.assertTrue(self.checks["swift-gyb"])
         branch, tag = settings.expected_rulesets(self.declared, ["policy / policy", "validate / result"])
         self.assertEqual(branch["bypass_actors"], [])
-        self.assertEqual(tag["bypass_actors"][0]["actor_type"], "OrganizationAdmin")
+        self.assertEqual(tag["bypass_actors"], [])
+        self.assertEqual(self.declared["merge"]["squash_merge_commit_message"], "BLANK")
         status = next(x for x in branch["rules"] if x["type"] == "required_status_checks")
         self.assertEqual([x["context"] for x in status["parameters"]["required_status_checks"]],
                          ["policy / policy", "validate / result"])

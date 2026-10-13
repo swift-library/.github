@@ -2,7 +2,8 @@
 
 This is the release standard for every swift-library repository. Each package's
 own release policy records its version source, compatibility surface and tested
-environments; the rules below are shared. The default branch is `master`.
+environments; the rules below are shared. Repository scope and default branches
+follow [Maintenance](MAINTENANCE.md#repository-scope).
 
 ## Tags
 
@@ -10,8 +11,7 @@ environments; the rules below are shared. The default branch is `master`.
   [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html).
 - Tags are written `vMAJOR.MINOR.PATCH`. Pre-releases append `-alpha.N`,
   `-beta.N` or `-rc.N`, with N starting at 1.
-- swift-gyb's `0.0.1` and `0.0.2` were published without the prefix and stay as
-  published. SwiftPM orders both spellings correctly.
+- Tags are signed annotated tags with the message `<repository> X.Y.Z`.
 
 ## Choosing the next version
 
@@ -45,8 +45,10 @@ Each repository has exactly one declaration of its version:
 - executables use the source file that `--version` prints.
 
 `.github/release.json` names that declaration with `version_file` and
-`version_pattern`, and `Scripts/validate-version` reads nothing else. Checks
-fail on drift and never rewrite the declaration.
+`version_pattern`. The shared version validator reads that declaration and
+checks it against the changelog and, during publication, the signed tag.
+Checks fail on drift and never rewrite version inputs. Packages use the
+validator embedded in the shared workflows.
 
 ## Changelog
 
@@ -56,16 +58,21 @@ describes shipped behavior, and for a breaking change, how to upgrade.
 
 ## Release procedure
 
-1. On `master`, make one commit that bumps the version source, moves the
-   unreleased entries under `## X.Y.Z`, and updates the README dependency
+1. On a branch based on `master`, update the version source, move the
+   unreleased entries under `## X.Y.Z`, and update the README dependency
    snippet to `.upToNextMinor(from: "X.Y.Z")`.
-2. When CI passes on that commit, tag it `vX.Y.Z` and push the tag.
-3. Run the repository's `Release` workflow with that tag. It validates the
+2. Open a Conventional Commit-titled pull request. After required checks pass
+   and review threads are resolved, squash-merge its exact reviewed head as
+   described in [Maintenance](MAINTENANCE.md#change-flow).
+3. Check out the accepted merge commit and create its signed annotated tag:
+   `git tag -s vX.Y.Z -m "<repository> X.Y.Z"`. Push it with
+   `git push origin vX.Y.Z`.
+4. Run the repository's `Release` workflow with that tag. It validates the
    tagged commit through the shared `swift-package-ci.yml`, then the shared
-   `swift-package-release.yml` runs
-   `Scripts/validate-version --tag vX.Y.Z --require-clean`, attaches the
+   `swift-package-release.yml` runs its embedded validator with
+   `--tag vX.Y.Z --require-clean`, attaches the
    validation evidence and publishes the GitHub release.
-4. Resolve the new tag from a fresh consumer package.
+5. Resolve the new tag from a fresh consumer package.
 
 ## Consumers and pins
 
@@ -75,14 +82,18 @@ its own pin in the same change; for example, swift-userdefault pins swift-gyb.
 
 ## Platforms and toolchains
 
-- Deployment floors are never lower than the oldest targets the current Xcode
-  release can build for. For Xcode 27 these are iOS 15, macOS 12, tvOS 15 and
-  watchOS 9. A package declares higher floors when it needs newer APIs.
+- Deployment floors use the current Xcode minimums: iOS 15, macOS 12, tvOS 15,
+  watchOS 9 and visionOS 1. A package declares higher floors when it needs
+  newer APIs.
 - Packages test the three most recent formally released major generations of
   each platform they declare. Count actual releases, not version numbers.
 - Swift compiler and SwiftSyntax minimums are chosen separately from the system
   window. Release evidence records the toolchain, OS and SDK combinations that
   were actually tested.
+- Every package requires Swift 6.0 or later. `minimum_swift` in
+  `.github/release.json` equals `swift-tools-version` in `Package.swift` and
+  the oldest compiler tested by its `ci` matrix. The shared validator checks
+  these declarations; the minimum compiler must have a CI entry.
 - Raising any floor or minimum is a breaking change in the table above.
   Existing releases keep their original requirements.
 
@@ -99,32 +110,14 @@ and test data keep their own notices.
 
 ## Immutable tags
 
-- A published tag never moves. Repository rulesets block updating or deleting
-  `v*` tags, and only organization admins can bypass them.
+- Published `v*` tags are never moved or deleted. Repository rulesets block
+  tag updates and deletion without bypass actors.
+- Published history is not rewritten. An exposed credential is rotated;
+  rewriting history does not revoke a credential or remove existing copies.
 - A tagged mistake is fixed by a new patch release. A candidate that failed
   before it was tagged is corrected under the same intended version.
 - An interrupted publication is retried with the same tag. An existing release
   is checked, never overwritten.
-
-## History cleanup
-
-Content that has to leave a public history is removed by rewriting the existing
-repository and force-pushing it. A repository is deleted and recreated only when
-its owner explicitly asks for that.
-
-1. Merge or close open pull requests, and rotate any exposed credential first.
-2. Rewrite, verify, and force-push the branches and tags.
-3. If published tags moved, publish a new patch release right away so consumers
-   have a version that never moved.
-
-Rewritten commits stay reachable by SHA, through pull request refs, and in
-forks and existing clones. That residue is accepted.
-
-Consumers that resolved a tag before it moved get a SwiftPM fingerprint error
-saying the revision "does not match previously recorded value". They recover by
-updating to the new patch release, or by deleting that package's file in
-`~/Library/org.swift.swiftpm/security/fingerprints/` (macOS) or
-`~/.swiftpm/security/fingerprints/` (Linux) and resolving again.
 
 ## Acceptance and evidence
 

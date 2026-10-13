@@ -1,8 +1,8 @@
 ## Change
 
-Describe the affected behavior and compatibility implications.
+Describe the problem and resulting behavior, including compatibility impact.
 
 ## Validation
 
-Record checks and consumer workflow evidence. Include any package-local policy
-that changes when adopting this update.
+List the checks run and their results. Include relevant consumer or platform
+evidence and explain any checks that could not run.

@@ -95,15 +95,14 @@ components:
 swift-library presents independently versioned Swift packages as one family.
 Each repository has an isometric stacked-slab icon: a rounded square seen from
 above, built from colored bands, with a raised glyph on its top face. The
-family shares geometry, lighting, and band rhythm; each repository has its own
-hue so the icons stay distinct side by side. Pages around the icons stay
+family shares geometry, lighting, and band rhythm. Member repositories have
+distinct hues; a member may share its hue only with the umbrella icon. Pages around the icons stay
 quiet: light neutral surfaces, near-black text, no decoration.
 
 ## Colors
 
 - **Primary** (`#f12e1d`) and **Primary Light** (`#ff9d36`) are the
-  organization icon's face; they appear only in the organization icon and its
-  derived assets.
+  organization icon's face and its derived assets.
 - **Badge Swift** (`#F05138`) colors the Swift version badge.
 - **Ink**, **Ink Secondary**, and **Ink Tertiary** set repository names,
   summaries, and owner labels on social preview cards.
@@ -111,8 +110,8 @@ quiet: light neutral surfaces, near-black text, no decoration.
   preview cards.
 - The **Terminal** colors define the dark window used for command-line demos,
   with a green prompt and light output text.
-- Repository icon colors live in the Iconography section, one hue per
-  repository.
+- Repository icon colors live in the Iconography section. Members use distinct
+  hues and may share a hue only with the umbrella icon.
 
 ## Typography
 
@@ -154,7 +153,7 @@ are square.
 
 ## Do's and Don'ts
 
-- Do give each new repository its own hue, spaced away from existing hues.
+- Do space member hues apart. A member may share a hue only with the umbrella icon.
 - Do keep symbols that must be read upright (rotation -45) and lay symmetric
   marks along the face axes (rotation 0).
 - Do derive banner and social preview art from the icons, never redraw them.
@@ -167,7 +166,9 @@ are square.
 ## Iconography
 
 Entries under `icons` render repository logos at 1024 px with
-`apple-framework-icon-design`. Colors are OKLCH. Regenerate after changing
+`skills/apple-framework-icon-design` in
+[showxu/skills](https://github.com/showxu/skills). Consumers pin the generator to
+a reviewed full commit SHA. Colors are OKLCH. Regenerate after changing
 an entry and replace the owning repository’s `Logo.svg` and `Logo.png`.
 
 The `app_icons` entry supplies `apple-app-icon-design` with the organization
@@ -186,9 +187,9 @@ appearances and web sizes derive from these layers and this entry.
         "oklch(0.64 0.21 14)"
       ],
       "band_colors": [
-        "oklch(0.58 0.21 18)",
-        "oklch(0.67 0.2 10)",
-        "oklch(0.8 0.11 2)"
+        "oklch(0.63 0.21 16)",
+        "oklch(0.7 0.19 10)",
+        "oklch(0.77 0.15 4)"
       ],
       "glyph": "toggle",
       "texture": "dots",
@@ -215,7 +216,7 @@ appearances and web sizes derive from these layers and this entry.
       "hue": 40,
       "texture": "grid",
       "face_colors": [
-        "oklch(0.82 0.14 52)",
+        "oklch(0.78 0.14 52)",
         "oklch(0.68 0.19 34)"
       ],
       "band_colors": [
@@ -316,13 +317,13 @@ appearances and web sizes derive from these layers and this entry.
       "texture_opacity": 0.15,
       "face_colors": [
         "oklch(0.42 0.07 168)",
-        "oklch(0.27 0.05 172)"
+        "oklch(0.3 0.05 172)"
       ],
       "band_colors": [
-        "oklch(0.36 0.07 170)",
-        "oklch(0.5 0.11 166)",
-        "oklch(0.66 0.14 162)",
-        "oklch(0.82 0.15 158)"
+        "oklch(0.35 0.07 170)",
+        "oklch(0.42 0.09 167)",
+        "oklch(0.49 0.11 164)",
+        "oklch(0.56 0.12 160)"
       ],
       "glyph_rotation": -45
     },
@@ -362,13 +363,13 @@ appearances and web sizes derive from these layers and this entry.
       "texture": "constellation",
       "glyph_rotation": -45,
       "face_colors": [
-        "oklch(0.8 0.11 290)",
+        "oklch(0.76 0.13 290)",
         "oklch(0.6 0.19 272)"
       ],
       "band_colors": [
         "oklch(0.64 0.17 272)",
-        "oklch(0.72 0.14 282)",
-        "oklch(0.81 0.1 292)"
+        "oklch(0.7 0.15 282)",
+        "oklch(0.76 0.13 292)"
       ]
     },
     "swift-json-schema": {
@@ -378,13 +379,13 @@ appearances and web sizes derive from these layers and this entry.
       "texture": "grid",
       "texture_opacity": 0.16,
       "face_colors": [
-        "oklch(0.47 0.16 295)",
-        "oklch(0.34 0.13 290)"
+        "oklch(0.6 0.17 296)",
+        "oklch(0.48 0.17 291)"
       ],
       "band_colors": [
-        "oklch(0.42 0.16 292)",
+        "oklch(0.48 0.17 292)",
         "oklch(0.57 0.19 292)",
-        "oklch(0.73 0.14 292)"
+        "oklch(0.66 0.17 292)"
       ],
       "glyph_rotation": -45,
       "glyph_scale": 0.32,
