@@ -73,5 +73,10 @@
     "repository": "swift-library/swift-pdf",
     "icon": "swift-pdf",
     "path": "Documentation/Assets/Logo.svg"
+  },
+  {
+    "repository": "swift-library/swift-interface-distiller",
+    "icon": "swift-interface-distiller",
+    "path": "Documentation/Assets/Logo.svg"
   }
 ]
