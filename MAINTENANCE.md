@@ -98,6 +98,7 @@ including its required checks, signatures and pull-request requirements.
 | `swift-pdf` | `policy / policy`, `validate / result` |
 | `swift-json-schema` | `policy / policy`, `validate / result` |
 | `swift-appstoreconnect` | `policy / policy`, `validate / result` |
+| `swift-interface-distiller` | `policy / policy`, `validate / result` |
 
 A renamed or added CI job updates its ruleset and this table in the same
 sitting; until then every pull request in that repository waits on the old

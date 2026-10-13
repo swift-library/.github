@@ -428,6 +428,23 @@ appearances and web sizes derive from these layers and this entry.
         "transform": "scale(0.01)",
         "d": "M-58 -86 H22 L60 -48 V86 H-58 Z M22 -86 V-48 H60 M-32 -10 H34 M-32 20 H34 M-32 50 H10"
       }
+    },
+    "swift-interface-distiller": {
+      "hue": 214,
+      "mode": "glow",
+      "bands": 3,
+      "glyph": "brackets",
+      "texture": "grid",
+      "glyph_rotation": -45,
+      "face_colors": [
+        "oklch(0.60 0.12 214)",
+        "oklch(0.49 0.10 214)"
+      ],
+      "band_colors": [
+        "oklch(0.53 0.12 214)",
+        "oklch(0.62 0.15 214)",
+        "oklch(0.71 0.16 214)"
+      ]
     }
   },
   "app_icons": {
