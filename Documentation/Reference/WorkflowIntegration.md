@@ -124,6 +124,63 @@ verifies the embedded reusable-workflow copy. Package producers should still
 emit portable logs locally. The shared gate enforces the upload boundary for
 all package consumers and preserves meaningful product and dependency names.
 
+## API evidence and comparison
+
+The shared package CI also runs an independent `api` job. It checks out the
+same candidate commit selected by `configure`, including the tested merge
+commit on pull requests. Required `result` validation depends only on
+`configure` and `check`; the API job has `continue-on-error: true`. Interface
+changes, missing baselines and collection or upload failures do not turn this
+report into a release gate.
+
+This observation job uses macOS 26 and Xcode 26.6. Those are the collector's
+execution configuration, not additional claims about the package's minimum
+compiler or supported platforms. Its SwiftPM collection scope is public/open
+interfaces of library products, with SPI and source locations excluded. The
+snapshot records the actual compiler build, SDK and target. Conditional APIs
+outside this configuration remain unobserved; this job does not schedule a
+package platform matrix.
+
+`Scripts/api-evidence.py` owns the collector pin, source-archive digest, envelope
+schema, baseline acquisition, collection and report orchestration. It builds
+that reviewed release of swift-interface-distiller, whose CLI owns extraction
+and field-level comparison. It fetches the release baseline before executing
+the candidate package and withholds the repository token from build processes.
+The embedded script comes from the pinned shared workflow, not a script in the
+caller. `Scripts/sync-api-workflows.py` derives both workflow copies and the API
+job's evidence gate; run it after changing either API orchestration or the
+shared evidence gate. `Scripts/check` verifies all generated copies.
+
+The artifact `api-evidence-<commit>` contains:
+
+- `api-evidence.json`: envelope schema 1, repository, source commit, collector
+  identity, `complete`/`incomplete`/`failed` status, reason and a snapshot or null;
+- `api-report.json`: report-only comparison status, release and asset identity,
+  counts by category and the collector's field-level differences;
+- `api-report.md` and `collection.log`: a summary and normalized diagnostics.
+
+The same privacy gate used for validation artifacts checks API evidence before
+upload. Publication reads the exact candidate's artifact, verifies its source
+identity, and attaches `api-evidence.json` alongside the validation archive. A
+missing API artifact yields an explicit failed-collection envelope. An artifact
+claiming a different repository or source commit is rejected as invalid
+publication evidence. Existing attachments are compared byte-for-byte and are
+never overwritten.
+
+Baseline selection uses the latest published stable release's single API asset,
+its download digest and its resolved tag commit. A missing release or asset
+reports `unavailable`; there is no fallback to committed files or a baseline
+rebuilt from candidate-controlled sources. Incomplete evidence reports
+`unavailable`, and different toolchain/configuration identities or selection
+scopes report `incomparable`. `equal` means equality of these observed snapshots,
+not a compatibility guarantee. The release and promotion rules are owned by
+[VERSIONING.md](../../VERSIONING.md#public-interface-evidence).
+
+Adopt a reviewed full shared SHA in all policy, validation and release callers
+together after a pinned consumer run. Older releases keep their existing assets;
+the first release after adoption establishes the remote API baseline. The
+package template carries the same pin for new repositories.
+
 ## Published icon validation
 
 The shared standards CI checks repository icons on pull requests, master pushes,

@@ -95,7 +95,7 @@ def main():
     for key in ("RUNNER_TEMP", "TMPDIR"):
         if os.environ.get(key):
             replacements.append((os.environ[key].rstrip("/"), "<temporary>"))
-    errors = check(Path(".build/release-validation"), replacements)
+    errors = check(Path(os.environ.get("EVIDENCE_DIRECTORY", ".build/release-validation")), replacements)
     if errors:
         raise SystemExit("\n".join(errors))
     print("validation evidence paths checked")
