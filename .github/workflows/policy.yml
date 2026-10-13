@@ -8,10 +8,6 @@ on:
         description: Newline-separated product names required by this repository
         type: string
         default: ''
-      allow-bots:
-        description: Newline-separated GitHub bot logins permitted for commit identities
-        type: string
-        default: ''
 
 permissions:
   contents: read
@@ -25,11 +21,10 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - name: Check source identity, content and version
+      - name: Check pull request title and source policy
         env:
           GH_TOKEN: ${{ github.token }}
           ALLOW_TERMS: ${{ inputs.allow-terms }}
-          ALLOW_BOTS: ${{ inputs.allow-bots }}
         run: |
           python3 - <<'PY'
           #!/usr/bin/env python3
@@ -44,6 +39,7 @@ jobs:
           import sys
 
           OWNER_EMAIL = "10173746+showxu@users.noreply.github.com"
+          CONVENTIONAL = re.compile(r"^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(?:\([^()\r\n]+\))?!?: [^\s].*$")
           ZERO_SHA = "0" * 40
           TRAILER = re.compile(
               r"^(Co-authored-by|Made-with|Generated-by|Generated-with|Assisted-by|Signed-off-by):"
@@ -63,26 +59,28 @@ jobs:
                   ["gh", "api", f"repos/{repository}/commits/{sha}"], text=True))
 
 
-          def commit_findings(sha, record, allow_bots):
+          def commit_findings(sha, record):
               commit = record["commit"]
               findings = []
-              for role in ("author", "committer"):
-                  email = commit[role]["email"].lower()
-                  login = (record.get(role) or {}).get("login", "").lower()
-                  allowed = email == OWNER_EMAIL or login in allow_bots
-                  if role == "committer" and email == "noreply@github.com":
-                      allowed = True
-                  if not allowed:
-                      findings.append(f"{sha}: unexpected {role} identity")
+              email = commit["committer"]["email"].lower()
+              if email not in {OWNER_EMAIL, "noreply@github.com"}:
+                  findings.append(f"{sha}: unexpected committer identity")
               if not commit.get("verification", {}).get("verified", False):
                   findings.append(f"{sha}: commit is not Verified by GitHub")
-              if TRAILER.search(commit["message"]):
-                  findings.append(f"{sha}: attribution trailer or tool attribution in commit message")
+              return findings
+
+
+          def title_findings(title, allow_terms):
+              findings = content_findings("PR title", 1, title, allow_terms)
+              if not CONVENTIONAL.fullmatch(title):
+                  findings.append("PR title: expected a Conventional Commit subject")
               return findings
 
 
           def content_findings(path, number, text, allow_terms):
               reasons = []
+              if TRAILER.search(text):
+                  reasons.append("attribution trailer or tool attribution")
               if PRIVATE_PATH.search(text):
                   reasons.append("private execution path")
               if PLAN.search(text):
@@ -116,7 +114,7 @@ jobs:
               raise ValueError("Policy requires a pull_request or non-deletion push event")
 
 
-          def check_range(repository, base, head, allow_terms, allow_bots, fetch_commit=api_commit):
+          def check_range(repository, base, head, allow_terms, *, verify_commits=False, fetch_commit=api_commit):
               for sha in (base, head):
                   if not re.fullmatch(r"[0-9a-f]{40}", sha):
                       raise ValueError("Event contains an invalid source SHA")
@@ -126,8 +124,9 @@ jobs:
               revision = head if new_branch else f"{base}..{head}"
               commits = git("rev-list", "--reverse", revision).splitlines()
               findings = []
-              for sha in commits:
-                  findings.extend(commit_findings(sha, fetch_commit(repository, sha), allow_bots))
+              if verify_commits:
+                  for sha in commits:
+                      findings.extend(commit_findings(sha, fetch_commit(repository, sha)))
 
               if new_branch:
                   comparison = git("hash-object", "-t", "tree", "--stdin").strip()
@@ -135,7 +134,6 @@ jobs:
                   comparison = git("merge-base", base, head).strip()
               paths = git("diff", "--name-only", "--no-renames", "-z", comparison, head).split("\0")
               for path in filter(None, paths):
-                  findings.extend(content_findings(path, 1, path, allow_terms))
                   # Git can emit byte fixtures as text when they contain no NUL. Keep
                   # scanning their readable content without requiring valid UTF-8.
                   patch = git("diff", "--no-ext-diff", "--no-color", "--no-renames", "--unified=0",
@@ -147,16 +145,16 @@ jobs:
 
           def main():
               event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text())
-              base, head = source_range(event, os.environ["GITHUB_EVENT_NAME"])
+              name = os.environ["GITHUB_EVENT_NAME"]
+              base, head = source_range(event, name)
               allow_terms = {x.strip().lower() for x in os.environ.get("ALLOW_TERMS", "").splitlines() if x.strip()}
-              allow_bots = {x.strip().lower() for x in os.environ.get("ALLOW_BOTS", "").splitlines() if x.strip()}
-              findings = check_range(os.environ["GITHUB_REPOSITORY"], base, head, allow_terms, allow_bots)
+              findings = check_range(os.environ["GITHUB_REPOSITORY"], base, head, allow_terms,
+                                     verify_commits=name == "push")
+              if name == "pull_request":
+                  findings.extend(title_findings(event["pull_request"]["title"], allow_terms))
               if findings:
                   print("\n".join(findings))
                   return 1
-              validator = Path("Scripts/validate-version")
-              if validator.is_file():
-                  subprocess.run([str(validator)], check=True)
               print("policy ok")
               return 0
 
@@ -168,3 +166,145 @@ jobs:
                   print(f"policy: {error}", file=sys.stderr)
                   sys.exit(1)
           PY
+      # Begin generated version validator.
+      - name: Validate version and compiler declarations
+        if: hashFiles('.github/release.json') != ''
+        run: |
+          set -euo pipefail
+          mkdir -p .build/shared .build/release-validation
+          cat > .build/shared/validate-version <<'PY'
+          #!/usr/bin/env python3
+          # SPDX-License-Identifier: Apache-2.0 WITH Swift-exception
+          # Copyright (c) 2026 Xudong Xu
+
+          """Check package-owned version inputs without changing them."""
+
+          import argparse
+          import hashlib
+          import json
+          from pathlib import Path
+          import re
+          import subprocess
+          import sys
+
+
+          VERSION = re.compile(
+              r"(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)"
+              r"(?:-(?:alpha|beta|rc)\.[1-9][0-9]*)?"
+          )
+
+
+          def git(root, *arguments):
+              return subprocess.check_output(["git", "-C", str(root), *arguments], text=True).strip()
+
+
+          def compiler_version(value):
+              if not isinstance(value, str) or not re.fullmatch(r"[0-9]+\.[0-9]+(?:\.[0-9]+)?", value):
+                  raise ValueError("Swift versions must use major.minor or major.minor.patch")
+              return tuple(int(part) for part in value.split(".")) + (0,) * (3 - len(value.split(".")))
+
+
+          def validate_compilers(root, config):
+              minimum = compiler_version(config["minimum_swift"])
+              if minimum < (6, 0, 0):
+                  raise ValueError("minimum_swift must be at least 6.0")
+              manifest = (root / "Package.swift").read_text()
+              match = re.search(r"^// swift-tools-version:\s*([0-9]+\.[0-9]+(?:\.[0-9]+)?)\s*$", manifest, re.M)
+              if not match or compiler_version(match[1]) != minimum:
+                  raise ValueError("minimum_swift must equal swift-tools-version")
+              compilers = []
+              for entry in config["ci"]["include"]:
+                  match = re.search(r"(?:^|-)swift-([0-9]+\.[0-9]+(?:\.[0-9]+)?)(?:$|-)", entry["name"])
+                  if match:
+                      declared = compiler_version(match[1])
+                      if entry.get("swift") and compiler_version(entry["swift"])[:2] != declared[:2]:
+                          raise ValueError("CI compiler name must match its installed Swift toolchain")
+                      compilers.append(declared)
+              if not compilers or min(compilers) != minimum:
+                  raise ValueError("minimum_swift must equal the oldest tested CI compiler")
+
+
+          def validate_tag(root, tag, version, repository, commit):
+              reference = "refs/tags/" + tag
+              if tag != "v" + version:
+                  raise ValueError("Tag must match v" + version)
+              if git(root, "cat-file", "-t", reference) != "tag":
+                  raise ValueError("Release tag must be signed and annotated")
+              if git(root, "rev-parse", reference + "^{commit}") != commit:
+                  raise ValueError("Release tag must resolve to the candidate commit")
+              message = git(root, "cat-file", "tag", reference).split("\n\n", 1)[1]
+              message = re.split(r"-----BEGIN (?:SSH|PGP) SIGNATURE-----", message)[0].strip()
+              if message != repository.split("/")[1] + " " + version:
+                  raise ValueError("Tag message must be <repository> X.Y.Z")
+              subprocess.run(["git", "-C", str(root), "verify-tag", reference], check=True)
+
+
+          def validate(root, tag=None, require_clean=False, configuration=".github/release.json"):
+              root = Path(root).resolve()
+              config = json.loads((root / configuration).read_text())
+              if not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", config["repository"]):
+                  raise ValueError("Expected a canonical owner/repository identity")
+              validate_compilers(root, config)
+              source = (root / config["version_file"]).read_text()
+              matches = re.findall(config["version_pattern"], source)
+              if len(matches) != 1 or not isinstance(matches[0], str) or not VERSION.fullmatch(matches[0]):
+                  raise ValueError("Expected one canonical SemVer declaration")
+              version = matches[0]
+              changelog = (root / config["changelog"]).read_text()
+              entries = list(re.finditer(r"^## (\S+)\s*$", changelog, re.MULTILINE))
+              selected = [i for i, entry in enumerate(entries) if entry[1] == version]
+              if len(selected) != 1:
+                  raise ValueError("Expected exactly one Changelog entry for " + version)
+              index = selected[0]
+              start = entries[index].end()
+              end = entries[index + 1].start() if index + 1 < len(entries) else len(changelog)
+              notes = changelog[start:end].strip()
+              if not notes:
+                  raise ValueError("Release notes must describe the shipped behavior")
+              dirty = bool(git(root, "status", "--porcelain", "--untracked-files=normal"))
+              if require_clean and dirty:
+                  raise ValueError("Release acceptance requires a clean committed source tree")
+              commit = git(root, "rev-parse", "HEAD")
+              if tag is not None:
+                  validate_tag(root, tag, version, config["repository"], commit)
+              lock = root / "Package.resolved"
+              result = {
+                  "repository": config["repository"],
+                  "version": version,
+                  "minimum_swift": config["minimum_swift"],
+                  "tag": "v" + version,
+                  "commit": commit,
+                  "tree": git(root, "rev-parse", "HEAD^{tree}"),
+                  "dirty": dirty,
+                  "dependency_lock_sha256": hashlib.sha256(lock.read_bytes()).hexdigest() if lock.exists() else None,
+                  "checker_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+              }
+              return result, notes
+
+
+          def main():
+              parser = argparse.ArgumentParser(description=__doc__)
+              parser.add_argument("--root", type=Path, default=Path.cwd())
+              parser.add_argument("--configuration", default=".github/release.json")
+              parser.add_argument("--tag")
+              parser.add_argument("--require-clean", action="store_true")
+              parser.add_argument("--notes", type=Path)
+              parser.add_argument("--json", action="store_true")
+              args = parser.parse_args()
+              try:
+                  result, notes = validate(args.root, args.tag, args.require_clean, args.configuration)
+                  if args.notes:
+                      args.notes.parent.mkdir(parents=True, exist_ok=True)
+                      args.notes.write_text(notes + "\n")
+                  print(json.dumps(result, indent=2) if args.json else result["version"])
+              except (OSError, ValueError, KeyError, subprocess.CalledProcessError) as error:
+                  print("validate-version: " + str(error), file=sys.stderr)
+                  return 1
+              return 0
+
+
+          if __name__ == "__main__":
+              sys.exit(main())
+          PY
+          python3 .build/shared/validate-version --require-clean --json > .build/release-validation/version.json
+      # End generated version validator.

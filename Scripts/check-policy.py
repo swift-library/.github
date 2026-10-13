@@ -10,6 +10,7 @@ import subprocess
 import sys
 
 OWNER_EMAIL = "10173746+showxu@users.noreply.github.com"
+CONVENTIONAL = re.compile(r"^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(?:\([^()\r\n]+\))?!?: [^\s].*$")
 ZERO_SHA = "0" * 40
 TRAILER = re.compile(
     r"^(Co-authored-by|Made-with|Generated-by|Generated-with|Assisted-by|Signed-off-by):"
@@ -29,26 +30,28 @@ def api_commit(repository, sha):
         ["gh", "api", f"repos/{repository}/commits/{sha}"], text=True))
 
 
-def commit_findings(sha, record, allow_bots):
+def commit_findings(sha, record):
     commit = record["commit"]
     findings = []
-    for role in ("author", "committer"):
-        email = commit[role]["email"].lower()
-        login = (record.get(role) or {}).get("login", "").lower()
-        allowed = email == OWNER_EMAIL or login in allow_bots
-        if role == "committer" and email == "noreply@github.com":
-            allowed = True
-        if not allowed:
-            findings.append(f"{sha}: unexpected {role} identity")
+    email = commit["committer"]["email"].lower()
+    if email not in {OWNER_EMAIL, "noreply@github.com"}:
+        findings.append(f"{sha}: unexpected committer identity")
     if not commit.get("verification", {}).get("verified", False):
         findings.append(f"{sha}: commit is not Verified by GitHub")
-    if TRAILER.search(commit["message"]):
-        findings.append(f"{sha}: attribution trailer or tool attribution in commit message")
+    return findings
+
+
+def title_findings(title, allow_terms):
+    findings = content_findings("PR title", 1, title, allow_terms)
+    if not CONVENTIONAL.fullmatch(title):
+        findings.append("PR title: expected a Conventional Commit subject")
     return findings
 
 
 def content_findings(path, number, text, allow_terms):
     reasons = []
+    if TRAILER.search(text):
+        reasons.append("attribution trailer or tool attribution")
     if PRIVATE_PATH.search(text):
         reasons.append("private execution path")
     if PLAN.search(text):
@@ -82,7 +85,7 @@ def source_range(event, name):
     raise ValueError("Policy requires a pull_request or non-deletion push event")
 
 
-def check_range(repository, base, head, allow_terms, allow_bots, fetch_commit=api_commit):
+def check_range(repository, base, head, allow_terms, *, verify_commits=False, fetch_commit=api_commit):
     for sha in (base, head):
         if not re.fullmatch(r"[0-9a-f]{40}", sha):
             raise ValueError("Event contains an invalid source SHA")
@@ -92,8 +95,9 @@ def check_range(repository, base, head, allow_terms, allow_bots, fetch_commit=ap
     revision = head if new_branch else f"{base}..{head}"
     commits = git("rev-list", "--reverse", revision).splitlines()
     findings = []
-    for sha in commits:
-        findings.extend(commit_findings(sha, fetch_commit(repository, sha), allow_bots))
+    if verify_commits:
+        for sha in commits:
+            findings.extend(commit_findings(sha, fetch_commit(repository, sha)))
 
     if new_branch:
         comparison = git("hash-object", "-t", "tree", "--stdin").strip()
@@ -101,7 +105,6 @@ def check_range(repository, base, head, allow_terms, allow_bots, fetch_commit=ap
         comparison = git("merge-base", base, head).strip()
     paths = git("diff", "--name-only", "--no-renames", "-z", comparison, head).split("\0")
     for path in filter(None, paths):
-        findings.extend(content_findings(path, 1, path, allow_terms))
         # Git can emit byte fixtures as text when they contain no NUL. Keep
         # scanning their readable content without requiring valid UTF-8.
         patch = git("diff", "--no-ext-diff", "--no-color", "--no-renames", "--unified=0",
@@ -113,16 +116,16 @@ def check_range(repository, base, head, allow_terms, allow_bots, fetch_commit=ap
 
 def main():
     event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text())
-    base, head = source_range(event, os.environ["GITHUB_EVENT_NAME"])
+    name = os.environ["GITHUB_EVENT_NAME"]
+    base, head = source_range(event, name)
     allow_terms = {x.strip().lower() for x in os.environ.get("ALLOW_TERMS", "").splitlines() if x.strip()}
-    allow_bots = {x.strip().lower() for x in os.environ.get("ALLOW_BOTS", "").splitlines() if x.strip()}
-    findings = check_range(os.environ["GITHUB_REPOSITORY"], base, head, allow_terms, allow_bots)
+    findings = check_range(os.environ["GITHUB_REPOSITORY"], base, head, allow_terms,
+                           verify_commits=name == "push")
+    if name == "pull_request":
+        findings.extend(title_findings(event["pull_request"]["title"], allow_terms))
     if findings:
         print("\n".join(findings))
         return 1
-    validator = Path("Scripts/validate-version")
-    if validator.is_file():
-        subprocess.run([str(validator)], check=True)
     print("policy ok")
     return 0
 

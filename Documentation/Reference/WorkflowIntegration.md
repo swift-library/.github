@@ -1,7 +1,26 @@
 # Workflow Integration
 
 Package-local `.github/release.json` owns the version file and extraction pattern,
-changelog path, check command, CI matrix and supported platform generations.
+changelog path, check command, CI matrix, supported platform generations and
+minimum Swift compiler. The shared keys are:
+
+| Key | Meaning |
+| --- | --- |
+| `repository` | Canonical owner/repository identity |
+| `version_file` | Path to the package's canonical version declaration |
+| `version_pattern` | Regular expression with one version capture |
+| `changelog` | Path to the release notes |
+| `check_command` | Default package validation command |
+| `ci` | Matrix with an `include` list of validation jobs |
+| `platforms` | Package-owned supported platform generations |
+| `minimum_swift` | Minimum tested Swift compiler, equal to `swift-tools-version` |
+
+Other keys belong to the package's own check scripts. Compiler jobs include
+`swift-X.Y` or `swift-X.Y.Z` in their hyphen-separated name; formatting-only jobs
+have no compiler label. The lowest declared compiler must equal `minimum_swift`
+and be at least 6.0. The optional installed `swift` toolchain must match its job's
+compiler major and minor versions. Every declared compiler job runs the package
+checks, so validation must pass on the declared minimum.
 The check command runs in the caller's checkout. Each matrix entry defines a
 unique name, hosted runner and optional installed Xcode version, macOS Swift toolchain version and check command.
 The `swift` field installs an official release toolchain after selecting Xcode;
@@ -22,7 +41,7 @@ branch rules to individual compiler or platform names.
 
 `swift-package-release.yml` accepts an existing version tag and the accepted
 commit returned by the successful validation workflow. Its publication job
-checks tag identity, calls the package's `Scripts/validate-version`, downloads
+checks tag identity and its signature with the embedded shared validator, downloads
 the same run's validation artifacts, and publishes a matching draft. Its token
 has contents write and actions read permissions. It does not build source.
 
@@ -31,11 +50,22 @@ publication job depends on the successful validation call and grants the write
 permission explicitly. Keep version selection and tag creation outside the
 publication workflow.
 
-The package's version checker supports `--tag`, `--require-clean`, `--notes` and
-`--json`. It checks the canonical SemVer declaration, one nonempty Changelog
-entry and an existing tag at the candidate commit. Its JSON identifies source,
-dependency lock and checker digests. The package check command adds toolchain,
-OS, SDK and completed check evidence to `.build/release-validation`.
+`Scripts/validate-version` in this repository owns version validation. Packages
+use its embedded workflow copies and do not ship a separate validator. It supports
+`--root`, `--configuration`, `--tag`, `--require-clean`, `--notes` and `--json`.
+It checks the canonical SemVer declaration, one nonempty Changelog entry and the
+minimum compiler contract. With `--tag` it requires an annotated tag at the
+candidate commit, the message `<repository> X.Y.Z`, and a valid signature from
+`git verify-tag`. Local SSH verification uses the signing configuration in
+[MAINTENANCE.md](../../MAINTENANCE.md#signing); publication trusts the owner's
+public SSH signing keys returned by GitHub.
+
+The CI workflow writes `.build/release-validation/version.json` after each
+successful package check. It identifies the source, minimum compiler, dependency
+lock and shared checker digests. The package check command adds toolchain, OS,
+SDK and completed check evidence to the same directory. Run
+`python3 Scripts/sync-version-workflows.py` and
+`python3 Scripts/sync-policy-workflow.py` after changing the shared validator.
 
 Review shared changes in their owning repository, validate workflow syntax, and
 exercise them through a consumer before upgrading another caller's pin. Generated
@@ -46,19 +76,21 @@ module name and copyright owner before their first validation or publication.
 
 Call `.github/workflows/policy.yml` at the same reviewed full commit SHA from a
 job named `policy`. The caller runs on pull requests and default-branch pushes
-with `contents: read`; the required check is `policy / policy`. The workflow
-checks every commit in the event's source range against GitHub's verification
-record, the declared owner identity, and attribution rules. It scans added
-lines and paths, then invokes the caller's `Scripts/validate-version` when that
-file exists. An initial push checks the complete initial history.
+with `contents: read`; include the `opened`, `synchronize`, `reopened` and
+`edited` pull request activity types so title corrections rerun the check.
+The required check is `policy / policy`. Pull requests check the title for
+Conventional Commit syntax, attribution and unapproved terms, then scan only
+added lines. Contributor identities and signatures do not block pull requests.
+Default-branch pushes require every new commit to be GitHub-verified with the
+owner or GitHub as committer; external and bot authors are accepted. An initial
+push checks the complete initial history. The embedded shared version validator
+runs when `.github/release.json` exists.
 
 The `allow-terms` input lists identifiers and product names required by the
-repository, one per line. A pagination cursor or CSS cursor keyword retains
-its own meaning. It does not exempt private paths or plan files. `allow-bots` lists bot
-logins permitted for author or committer identity; their commits must still be
-Verified. Keep both lists limited to the repository's actual public surface.
-Shared policy sources and their tests name all supported tools, so this
-repository declares those names in its own caller.
+repository, one per line. It does not exempt attribution, private paths or plan
+files. Keep the list limited to the repository's actual public surface. Shared
+policy sources and their tests name all supported tools, so this repository
+declares those names in its own caller.
 
 `Scripts/check-policy.py` owns the policy implementation. Run
 `python3 Scripts/sync-policy-workflow.py` after editing it. The generated

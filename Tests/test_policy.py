@@ -19,20 +19,26 @@ def record(verified=True, message="fix: validate input", email=policy.OWNER_EMAI
 
 
 class PolicyTests(unittest.TestCase):
-    def test_identity_signature_and_trailer(self):
-        self.assertEqual(policy.commit_findings("a", record(), set()), [])
-        self.assertIn("not Verified", policy.commit_findings("a", record(False), set())[0])
-        self.assertTrue(policy.commit_findings("a", record(email="another@example.test"), set()))
-        self.assertTrue(policy.commit_findings("a", record(message="fix: input\n\nCo-authored-by: helper"), set()))
+    def test_push_committer_and_verification(self):
+        self.assertEqual(policy.commit_findings("a", record()), [])
+        self.assertIn("not Verified", policy.commit_findings("a", record(False))[0])
+        self.assertTrue(policy.commit_findings("a", record(email="another@example.test")))
+        for author in ("external@example.test", "update[bot]@users.noreply.github.com"):
+            commit = record()
+            commit["commit"]["author"]["email"] = author
+            commit["commit"]["committer"]["email"] = "noreply@github.com"
+            self.assertEqual(policy.commit_findings("a", commit), [])
 
-    def test_bot_permission_does_not_skip_verification(self):
-        bot = record(False, email="bot@example.test")
-        bot.update(author={"login": "update[bot]"}, committer={"login": "update[bot]"})
-        findings = policy.commit_findings("a", bot, {"update[bot]"})
-        self.assertEqual(len(findings), 1)
-        self.assertIn("not Verified", findings[0])
+    def test_pr_titles(self):
+        for title in ("fix: validate input", "feat(api)!: change request shape", "ci(deps): update action"):
+            self.assertEqual(policy.title_findings(title, set()), [])
+        for title in ("Update dependency", "fix: ", "unknown: change", "fix: Codex attribution"):
+            self.assertTrue(policy.title_findings(title, set()))
+        self.assertEqual(policy.title_findings("fix: Codex requests", {"codex"}), [])
+        self.assertTrue(policy.title_findings("fix: Generated " + "with helper", set()))
 
     def test_content_and_allowlist(self):
+        self.assertTrue(policy.content_findings("a", 3, "Co-authored-by: helper", set()))
         workstation = "/" + "Users/fixture/project"
         self.assertTrue(policy.content_findings("a", 3, workstation, set()))
         self.assertTrue(policy.content_findings("a", 3, "." + "workspace/cache", set()))
@@ -66,14 +72,16 @@ class PolicyTests(unittest.TestCase):
                                "-c", "commit.gpgsign=false", "-c", "core.hooksPath=/dev/null", "commit", "-qm", "fix: fixture")
                     return policy.git("rev-parse", "HEAD").strip()
                 base = commit("clean\n")
-                self.assertEqual(policy.check_range("example/repo", policy.ZERO_SHA, base, set(), set(), lambda *_: record()), [])
+                self.assertEqual(policy.check_range("example/repo", policy.ZERO_SHA, base, set(), verify_commits=True, fetch_commit=lambda *_: record()), [])
+                self.assertEqual(policy.check_range("example/repo", policy.ZERO_SHA, base, set(),
+                    fetch_commit=lambda *_: self.fail("PRs must not inspect commit identities")), [])
                 head = commit("clean\n/" + "home/fixture/private\n")
-                findings = policy.check_range("example/repo", base, head, set(), set(), lambda *_: record())
+                findings = policy.check_range("example/repo", base, head, set(), verify_commits=True, fetch_commit=lambda *_: record())
                 self.assertEqual(findings, ["sample.txt:2: private execution path"])
                 byte_fixture = commit(b"invalid UTF-8: \xfa\n")
-                self.assertEqual(policy.check_range("example/repo", head, byte_fixture, set(), set(), lambda *_: record()), [])
+                self.assertEqual(policy.check_range("example/repo", head, byte_fixture, set(), verify_commits=True, fetch_commit=lambda *_: record()), [])
                 unsafe_fixture = commit(b"invalid UTF-8: \xfa\n/" + b"home/fixture/private\n")
-                self.assertEqual(policy.check_range("example/repo", byte_fixture, unsafe_fixture, set(), set(), lambda *_: record()),
+                self.assertEqual(policy.check_range("example/repo", byte_fixture, unsafe_fixture, set(), verify_commits=True, fetch_commit=lambda *_: record()),
                                  ["sample.txt:2: private execution path"])
             finally:
                 os.chdir(previous)
