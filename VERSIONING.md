@@ -71,7 +71,7 @@ describes shipped behavior, and for a breaking change, how to upgrade.
    tagged commit through the shared `swift-package-ci.yml`, then the shared
    `swift-package-release.yml` runs its embedded validator with
    `--tag vX.Y.Z --require-clean`, attaches the
-   validation evidence and publishes the GitHub release.
+   validation evidence and `api-evidence.json`, then publishes the GitHub release.
 5. Resolve the new tag from a fresh consumer package.
 
 ## Consumers and pins
@@ -135,6 +135,37 @@ validation.
 Validation jobs use read-only repository permissions. Publication is a separate
 job with scoped contents write permission. Callers pin the shared workflows by
 full commit SHA.
+
+## Public interface evidence
+
+Each release attaches `api-evidence.json`: a versioned envelope binding the
+repository and signed tag commit to the collector pin, collection status and
+compiler-reported snapshot. The snapshot records its actual toolchain, SDK,
+target, scope and gaps. A failed collection records that failure; it does not
+manufacture an empty compatible interface. Existing release assets remain
+unchanged. For historical releases without this asset, comparison starts when a
+subsequent release publishes evidence.
+
+The shared API report compares the candidate commit with the asset on GitHub's
+latest published stable release. It verifies the asset digest and binds the
+baseline to that release's tag commit. A pull request cannot select or rewrite
+the baseline in its source tree. Drafts and pre-releases are excluded from
+baseline selection; a pre-release candidate is still compared with the latest
+stable release. The same rule applies during 0.x. Version choices continue to
+follow the table above.
+
+Missing evidence, collection failures, unsupported schemas, incomplete module
+coverage and mismatched configurations or scopes are explicit unknown or
+incomparable results. They never prove compatibility. Field changes distinguish
+interface, documentation, availability and provenance; these observations do
+not decide whether behavior changed or which version to publish.
+
+The API job is report-only and is outside required validation. Promoting any
+observation into a blocking rule requires a separate owner-approved policy
+change, representative consumer evidence across supported configurations,
+documented failure and exception behavior, and a reviewed required-check
+update. Existing package-owned API checks retain their own authority until
+separately reviewed for replacement.
 
 ## Maintenance
 
