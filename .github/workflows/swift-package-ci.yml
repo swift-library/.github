@@ -275,7 +275,7 @@ jobs:
           python3 - <<'PY'
           #!/usr/bin/env python3
           # SPDX-License-Identifier: Apache-2.0 WITH Swift-exception
-          """Normalize execution paths in logs and reject private context in uploadable text."""
+          """Normalize execution paths and reject private context in uploadable text."""
 
           import io
           import json
@@ -297,11 +297,25 @@ jobs:
                       for number, line in enumerate(text.splitlines(), 1) if PRIVATE_PATH.search(line)]
 
 
-          def archive_findings(data, name, depth=0):
+          def normalize_text(data, replacements):
+              try:
+                  text = data.decode("utf-8")
+              except UnicodeDecodeError:
+                  return data
+              for source, value in replacements:
+                  text = text.replace(source, value)
+              return text.encode("utf-8")
+
+
+          def normalize_archive(data, name, replacements, depth=0):
               if depth > 4:
-                  return [f"{name}: nested archive depth exceeds the evidence check limit"]
+                  return data, [f"{name}: nested archive depth exceeds the evidence check limit"]
               errors = []
-              with tarfile.open(fileobj=io.BytesIO(data), mode="r:*") as archive:
+              changed = False
+              output = io.BytesIO()
+              mode = "w:gz" if name.endswith((".tar.gz", ".tgz")) else "w"
+              with tarfile.open(fileobj=io.BytesIO(data), mode="r:*") as archive, \
+                      tarfile.open(fileobj=output, mode=mode) as normalized:
                   for member in archive:
                       label = name + "!" + member.name
                       path = PurePosixPath(member.name)
@@ -311,14 +325,21 @@ jobs:
                       if member.isfile():
                           content = archive.extractfile(member).read()
                           if member.name.endswith((".tar.gz", ".tgz", ".tar")):
-                              errors.extend(archive_findings(content, label, depth + 1))
+                              replacement, nested_errors = normalize_archive(content, label, replacements, depth + 1)
+                              errors.extend(nested_errors)
                           else:
-                              errors.extend(findings(content, label))
-              return errors
+                              replacement = normalize_text(content, replacements)
+                              errors.extend(findings(replacement, label))
+                          changed |= content != replacement
+                          member.size = len(replacement)
+                          normalized.addfile(member, io.BytesIO(replacement))
+                      else:
+                          normalized.addfile(member)
+              return (output.getvalue() if changed and not errors else data), errors
 
 
           def check(directory, replacements):
-              """Normalize plain-text logs; scan UTF-8 files and compressed DocC contents."""
+              """Normalize UTF-8 files and archive contents before checking for private paths."""
               errors = []
               if not directory.is_dir():
                   return ["Validation evidence directory is missing"]
@@ -334,26 +355,25 @@ jobs:
                   content = path.read_bytes()
                   if path.suffix == ".log":
                       try:
-                          text = content.decode("utf-8")
+                          content.decode("utf-8")
                       except UnicodeDecodeError:
                           errors.append(f"{name}: log is not UTF-8")
                           continue
-                      for source, value in replacements:
-                          text = text.replace(source, value)
-                      content = text.encode("utf-8")
-                      path.write_bytes(content)
                   if name == "package.json":
                       manifest = json.loads(content)
                       package_kind = manifest.get("packageKind", {})
                       if package_kind.get("root") == [str(Path.cwd())]:
                           package_kind["root"] = ["."]
                           content = (json.dumps(manifest, indent=2) + "\n").encode()
-                          path.write_bytes(content)
                   errors.extend(findings(name.encode(), name))
                   if path.name.endswith((".tar.gz", ".tgz", ".tar")):
-                      errors.extend(archive_findings(content, name))
+                      content, archive_errors = normalize_archive(content, name, replacements)
+                      errors.extend(archive_errors)
                   else:
+                      content = normalize_text(content, replacements)
                       errors.extend(findings(content, name))
+                  if content != path.read_bytes():
+                      path.write_bytes(content)
               return errors
 
 

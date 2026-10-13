@@ -109,11 +109,10 @@ nonzero; the checker never changes settings or reads secret values.
 ## Validation evidence
 
 The shared package CI normalizes the current checkout, home and temporary
-paths in UTF-8 `.log` files before uploading artifacts. SwiftPM's captured
-manifest root is made relative to the package; dependency locations retain
-their values and are checked. The gate rejects remaining
-private execution paths and plan references in UTF-8 evidence, including the
-contents of compressed DocC and nested evidence archives. Binary artifacts
+paths in every UTF-8 text file before uploading artifacts, including text
+inside compressed DocC and nested evidence archives. SwiftPM's captured
+manifest root is made relative to the package. The gate rejects remaining
+private execution paths and plan references. Binary artifacts
 retain their bytes; they are not interpreted as text. Symlinks and unsafe tar
 members fail the gate. A failed gate prevents the evidence upload and fails
 validation.
