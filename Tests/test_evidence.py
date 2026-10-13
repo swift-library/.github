@@ -37,6 +37,27 @@ class EvidenceTests(unittest.TestCase):
         path.write_text(json.dumps({'dependencies': ['/' + 'home' + '/someone/private']}))
         self.assertEqual(len(evidence.check(self.root, [])), 1)
 
+    def test_all_utf8_files_normalize_known_paths_longest_first(self):
+        home = '/' + 'Users' + '/runner'
+        checkout = home + '/work/package'
+        temporary = checkout + '/.build/temporary'
+        replacements = [(home, '<home>'), (checkout, '<package>'), (temporary, '<temporary>')]
+        files = {
+            'Package.swift': f'.package(path: "{checkout}")\n',
+            'consumer.json': json.dumps({'home': home, 'temporary': temporary + '/consumer'}),
+            'receipt': f'{checkout}/Sources/Example.swift\nRésumé: passed\n',
+        }
+        for name, content in files.items():
+            (self.root / name).write_text(content)
+        self.assertEqual(evidence.check(self.root, replacements), [])
+        self.assertEqual((self.root / 'Package.swift').read_text(), '.package(path: "<package>")\n')
+        self.assertEqual(json.loads((self.root / 'consumer.json').read_text()),
+                         {'home': '<home>', 'temporary': '<temporary>/consumer'})
+        self.assertEqual((self.root / 'receipt').read_text(), '<package>/Sources/Example.swift\nRésumé: passed\n')
+        before = {path.name: path.read_bytes() for path in self.root.iterdir()}
+        self.assertEqual(evidence.check(self.root, replacements), [])
+        self.assertEqual({path.name: path.read_bytes() for path in self.root.iterdir()}, before)
+
     def test_unknown_paths_and_plans_fail_with_location(self):
         (self.root / 'metadata.json').write_text('{"path":"/' + 'home' + '/someone/private"}\n')
         (self.root / 'check.log').write_text('unrelated.' + 'plan.md\n')
@@ -45,11 +66,13 @@ class EvidenceTests(unittest.TestCase):
         self.assertTrue(any('metadata.json:1:' in error for error in errors))
         self.assertTrue(all('someone' not in error for error in errors))
 
-    def bundle(self, name, data, kind=tarfile.REGTYPE):
+    def bundle(self, name, data, kind=tarfile.REGTYPE, mode='w:gz'):
         output = io.BytesIO()
-        with tarfile.open(fileobj=output, mode='w:gz') as archive:
+        with tarfile.open(fileobj=output, mode=mode) as archive:
             member = tarfile.TarInfo(name)
             member.type = kind
+            member.mode = 0o640
+            member.mtime = 42
             member.size = len(data)
             archive.addfile(member, io.BytesIO(data))
         return output.getvalue()
@@ -63,6 +86,25 @@ class EvidenceTests(unittest.TestCase):
         self.assertIn('validation.tar.gz!module.doccarchive.tar.gz!data/module.json:1:', errors[0])
         self.assertEqual(len(list(self.root.iterdir())), 1)
 
+    def test_archive_binary_and_unchanged_archives_are_preserved(self):
+        checkout = '/' + 'home' + '/runner/package'
+        data = b'\xff' + checkout.encode()
+        path = self.root / 'binary.tar.gz'
+        archive = self.bundle('payload.bin', data)
+        path.write_bytes(archive)
+        self.assertEqual(evidence.check(self.root, [(checkout, '<package>')]), [])
+        self.assertEqual(path.read_bytes(), archive)
+
+    def test_archived_text_retains_published_digest_and_is_scanned(self):
+        checkout = '/' + 'home' + '/runner/package'
+        path = self.root / 'validation.tar.gz'
+        archive = self.bundle('receipt.txt', (checkout + '/Source.swift').encode())
+        path.write_bytes(archive)
+        errors = evidence.check(self.root, [(checkout, '<package>')])
+        self.assertEqual(len(errors), 1)
+        self.assertIn('validation.tar.gz!receipt.txt:1:', errors[0])
+        self.assertEqual(path.read_bytes(), archive)
+
     def test_symlinks_and_unsafe_archive_names_fail(self):
         (self.root / 'link.log').symlink_to(self.root / 'missing')
         (self.root / 'bad.tar.gz').write_bytes(self.bundle('../outside', b'content'))
@@ -74,6 +116,11 @@ class EvidenceTests(unittest.TestCase):
         path.write_bytes(data)
         self.assertEqual(evidence.check(self.root, []), [])
         self.assertEqual(path.read_bytes(), data)
+
+    def test_non_utf8_logs_are_rejected(self):
+        path = self.root / 'check.log'
+        path.write_bytes(b'\xff')
+        self.assertEqual(evidence.check(self.root, []), ['check.log: log is not UTF-8'])
 
 
 if __name__ == '__main__':
