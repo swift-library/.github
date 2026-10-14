@@ -48,7 +48,7 @@ def render(catalog):
         '<p align="center">',
         f'  <img src="https://raw.githubusercontent.com/{organization}/.github/master/Documentation/Assets/Logo.svg" width="128" alt="swift-library umbrella logo">',
         "</p>", "",
-        f'<h1 align="center">{escape(promise["heading"])}</h1>', "",
+        f'<h1 align="center" dir="ltr">{escape(promise["heading"])}</h1>', "",
         '<p align="center">', f'  {escape(promise["secondary"])}', "</p>", "",
         '<p align="center">',
         f'  <a href="https://{catalog["navigation"]["documentation"]}/">Documentation</a> ·',

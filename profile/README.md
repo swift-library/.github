@@ -3,7 +3,7 @@
   <img src="https://raw.githubusercontent.com/swift-library/.github/master/Documentation/Assets/Logo.svg" width="128" alt="swift-library umbrella logo">
 </p>
 
-<h1 align="center">Focused Swift packages, released independently, with evidence you can inspect.</h1>
+<h1 align="center" dir="ltr">Focused Swift packages, released independently, with evidence you can inspect.</h1>
 
 <p align="center">
   Signed releases ship compiler and platform validation from each package’s declared CI matrix, plus public API evidence.
