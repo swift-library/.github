@@ -196,10 +196,13 @@ Repository rules live in the `## Code Review Rules` section of `AGENTS.md`,
 with area-specific rules in nested guides. Required checks enforce the merge
 gate, and the ruleset requires every review thread to be resolved before merging.
 
-## Open Items
+## Tool Release Updates
 
-- `homebrew-tap`'s scheduled updater pushes verified formula updates with the
-  workflow token, which the `default branch` ruleset rejects. It moves to an
-  organization-owned Updater App (`contents` and `pull_requests` write,
-  installed only on `homebrew-tap`) that opens a pull request with auto-merge.
-  The formula currently matches the latest `swift-sh` release.
+`homebrew-tap` checks published releases for the tools in its metadata catalog.
+The scheduled workflow verifies candidates with read permissions, then uses a
+separate job with `issues: write` to open a release notice. Open and closed
+notices identify releases by repository and Release ID to prevent repeats.
+Maintainers review each candidate and update the tap through the normal signed
+pull-request flow. See the tap's
+[Release Updates](https://github.com/swift-library/homebrew-tap/blob/master/Documentation/ReleaseUpdates.md)
+for validation and publication steps.
