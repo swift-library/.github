@@ -194,7 +194,16 @@ never overwritten.
 Baseline selection uses the latest published stable release's single API asset,
 its download digest and its resolved tag commit. A missing release or asset
 reports `unavailable`; there is no fallback to committed files or a baseline
-rebuilt from candidate-controlled sources. Incomplete evidence reports
+rebuilt from candidate-controlled sources. If a verified asset's collector pin or
+snapshot extractor version differs from the current pin, the job clones the release
+repository and checks out its already resolved tag commit, then recollects that source
+with the pinned collector. This happens before candidate collection. The report records
+`source: recollected-release-tag`, the original attached collector and the current
+collector; its summary states that the baseline was recollected. Baselines and the
+release checkout stay under `.build/shared-api/`, outside version control. Matching
+assets are reused directly. Failed recollection yields an unavailable comparison while
+candidate collection still runs. A final version check prevents mixed-collector
+comparisons even if recollection returned unexpected evidence. Incomplete evidence reports
 `unavailable`, and different toolchain/configuration identities or selection
 scopes report `incomparable`. `equal` means equality of these observed snapshots,
 not a compatibility guarantee. The release and promotion rules are owned by
