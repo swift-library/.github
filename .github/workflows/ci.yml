@@ -33,7 +33,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: showxu/skills
-          ref: 6bc0813a95365107a00b9d1d04f4ab4b19618396
+          ref: e12d9066ce96dea5c00ef33bec6cd96f65adae78
           path: .build/icon-generator
           persist-credentials: false
       - name: Lint palettes and check published logos
