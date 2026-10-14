@@ -79,6 +79,11 @@ class APIEvidenceTests(unittest.TestCase):
             with self.subTest(value=value), self.assertRaises(api.Unavailable):
                 api.baseline(Release(value, complete()))
 
+    def test_public_api_requests_use_json_without_a_token(self):
+        with patch.dict(os.environ, {}, clear=True), patch.object(api, 'read_url', return_value=b'{}') as download:
+            self.assertEqual(api.GitHub(REPOSITORY).get('/releases/latest'), {})
+            self.assertEqual(download.call_args.kwargs['accept'], 'application/vnd.github+json')
+
     def test_asset_origin_and_digest_are_verified(self):
         content = b'{"schema_version":1}'
         value = {'browser_download_url': 'https://github.com/example/package/releases/download/v0.1.0/api-evidence.json',

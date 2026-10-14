@@ -36,8 +36,8 @@ def write(path, value):
     temporary.replace(path)
 
 
-def read_url(url, token=None):
-    headers = {'Accept': 'application/vnd.github+json' if token else 'application/octet-stream'}
+def read_url(url, token=None, accept='application/octet-stream'):
+    headers = {'Accept': accept}
     if token:
         headers['Authorization'] = 'Bearer ' + token
     with urlopen(Request(url, headers=headers), timeout=60) as response:
@@ -53,7 +53,7 @@ class GitHub:
 
     def get(self, suffix):
         return json.loads(read_url('https://api.github.com/repos/' + self.repository + suffix,
-                                  os.environ.get('GH_TOKEN')))
+                                  os.environ.get('GH_TOKEN'), accept='application/vnd.github+json'))
 
     def latest(self):
         try:
