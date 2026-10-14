@@ -4,42 +4,19 @@ on:
   push:
     branches: [master]
   pull_request:
-    types: [opened, synchronize, reopened, edited]
-  schedule:
-    - cron: '17 3 * * 1'
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
-  policy:
-    if: github.event_name == 'pull_request' || github.event_name == 'push'
-    uses: ./.github/workflows/policy.yml
-    with:
-      allow-terms: |
-        ChatGPT
-        Codex
-        Cursor
-        Claude
-
   icons:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - name: Check out the icon generator
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          repository: showxu/skills
-          ref: e12d9066ce96dea5c00ef33bec6cd96f65adae78
-          path: .build/icon-generator
-          persist-credentials: false
-      - name: Lint palettes and check published logos
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: python3 -B Scripts/check-icons.py --generator .build/icon-generator/skills/apple-framework-icon-design/scripts/design_icons.py
+    uses: ./.github/workflows/icon-audit.yml
 
   result:
     needs: icons
