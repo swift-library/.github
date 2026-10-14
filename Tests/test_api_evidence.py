@@ -20,7 +20,8 @@ OTHER = 'b' * 40
 
 def complete(commit=COMMIT):
     return api.envelope(REPOSITORY, commit, 'complete', 'Collected',
-                        {'schemaVersion': '1.0', 'configurations': [{'id': 'configuration'}]})
+                        {'schemaVersion': '1.0', 'configurations': [{'id': 'configuration',
+                         'configuration': {'extractorVersion': api.TOOL['version']}}]})
 
 
 class Release:
@@ -77,6 +78,11 @@ class APIEvidenceTests(unittest.TestCase):
                       published(assets=[{'name': api.ASSET}, {'name': api.ASSET}])):
             with self.subTest(value=value), self.assertRaises(api.Unavailable):
                 api.baseline(Release(value, complete()))
+
+    def test_public_api_requests_use_json_without_a_token(self):
+        with patch.dict(os.environ, {}, clear=True), patch.object(api, 'read_url', return_value=b'{}') as download:
+            self.assertEqual(api.GitHub(REPOSITORY).get('/releases/latest'), {})
+            self.assertEqual(download.call_args.kwargs['accept'], 'application/vnd.github+json')
 
     def test_asset_origin_and_digest_are_verified(self):
         content = b'{"schema_version":1}'
@@ -141,6 +147,47 @@ class APIEvidenceTests(unittest.TestCase):
         self.assertIsNone(evidence['evidence'])
         self.assertEqual(result['status'], 'unavailable')
         self.assertEqual(result['reason'], 'Compiler unavailable')
+
+    def test_comparison_never_mixes_collector_versions(self):
+        old = complete()
+        old['collector'] = {**api.TOOL, 'version': '0.0.1'}
+        with patch.object(api, 'run') as execute:
+            result = api.compare(complete(OTHER), old, {}, 'collector', self.root, self.root, self.root / 'log')
+            self.assertEqual(result['status'], 'unavailable')
+            execute.assert_not_called()
+        old = complete()
+        old['evidence']['configurations'][0]['configuration']['extractorVersion'] = '0.0.1'
+        self.assertFalse(api.collector_matches(old))
+
+    def test_baseline_recollection_binds_to_verified_release_commit(self):
+        prior = complete()
+        prior['collector'] = {**api.TOOL, 'version': '0.0.1'}
+        identity = {'tag': 'v0.1.0', 'commit': COMMIT, 'asset_id': 2, 'source': 'release-asset'}
+        with patch.object(api, 'run') as execute, patch.object(api, 'collect', return_value=complete()) as collect:
+            value, provenance = api.recollect(prior, identity, 'collector', self.root, self.root, self.root)
+            self.assertEqual(value, complete())
+            self.assertEqual(provenance['source'], 'recollected-release-tag')
+            self.assertEqual(provenance['attached_collector']['version'], '0.0.1')
+            self.assertEqual(execute.call_args_list[1].args[0], ['git', 'checkout', '--detach', COMMIT])
+            self.assertEqual(collect.call_args.args[-1], COMMIT)
+            self.assertEqual(collect.call_args.args[1], self.root / 'baseline-source')
+            self.assertIn('recollected from v0.1.0', api.summary({'status': 'equal', 'baseline': provenance}))
+        with patch.object(api, 'run') as execute:
+            self.assertEqual(api.recollect(complete(), identity, None, self.root, self.root, self.root),
+                             (complete(), identity))
+            execute.assert_not_called()
+
+    def test_failed_recollection_keeps_candidate_report_available(self):
+        identity = {'tag': 'v0.1.0', 'commit': COMMIT}
+        with patch.object(api, 'baseline', return_value=(complete(), identity)), \
+                patch.object(api, 'recollect', side_effect=api.Unavailable('Release source cannot build')), \
+                patch.object(api, 'collect', return_value=complete(OTHER)), \
+                patch.dict(os.environ, {}, clear=True):
+            api.report(self.root, REPOSITORY, OTHER, 'collector')
+        result = json.loads((self.root / '.build/api-evidence/api-report.json').read_text())
+        self.assertEqual(result['collection'], 'complete')
+        self.assertEqual(result['status'], 'unavailable')
+        self.assertEqual(result['baseline']['reason'], 'Release source cannot build')
 
     def test_release_preparation_preserves_verified_evidence_or_records_job_gap(self):
         api.prepare(self.root, REPOSITORY, COMMIT)

@@ -154,6 +154,14 @@ baseline selection; a pre-release candidate is still compared with the latest
 stable release. The same rule applies during 0.x. Version choices continue to
 follow the table above.
 
+Comparisons use one pinned collector version for both inputs. When the verified
+release asset used a different collector, the shared job checks out that release's
+resolved tag commit in its build directory and recollects it with the current pin
+before collecting the candidate. The report identifies the release commit, attached
+collector and recollection collector. Baseline files stay in build outputs. A failed
+recollection reports an unavailable comparison and preserves the candidate's collection
+result; evidence from different extractor versions is never compared.
+
 Missing evidence, collection failures, unsupported schemas, incomplete module
 coverage and mismatched configurations or scopes are explicit unknown or
 incomparable results. They never prove compatibility. Field changes distinguish
