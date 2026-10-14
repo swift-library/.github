@@ -110,7 +110,8 @@ def baseline(api):
         raise Unavailable('Latest release must have exactly one API evidence asset')
     commit = api.commit(release['tag_name'])
     value = validate(api.asset(assets[0]), api.repository, commit)
-    return value, {**identity, 'commit': commit, 'asset_id': assets[0]['id'], 'status': value['status']}
+    return value, {**identity, 'commit': commit, 'asset_id': assets[0]['id'],
+                   'status': value['status'], 'source': 'release-asset', 'collector': value.get('collector')}
 
 
 def run(arguments, root, log, timeout=3600, allowed=(0,)):
@@ -170,6 +171,36 @@ def collect(executable, root, scratch, output, repository, commit):
                     else 'Collection has gaps that prevent baseline acceptance', evidence)
 
 
+def collector_matches(value):
+    if value.get('collector') != TOOL:
+        return False
+    snapshot = value.get('evidence')
+    return snapshot is None or all(
+        configuration.get('configuration', {}).get('extractorVersion') == TOOL['version']
+        for configuration in snapshot.get('configurations', [])
+    )
+
+
+def recollect(prior, identity, executable, root, scratch, output):
+    """Rebuild only the verified release commit, before executing candidate sources."""
+    if prior is None or collector_matches(prior):
+        return prior, identity
+    source = scratch / 'baseline-source'
+    if source.exists():
+        shutil.rmtree(source)
+    log = output / 'collection.log'
+    run(['git', 'clone', '--no-checkout', '--filter=blob:none',
+         'https://github.com/' + prior['repository'] + '.git', source], root, log, timeout=300)
+    run(['git', 'checkout', '--detach', identity['commit']], source, log, timeout=300)
+    baseline_scratch = scratch / 'baseline-collection'
+    baseline_scratch.mkdir(parents=True, exist_ok=True)
+    value = collect(executable, source, baseline_scratch, output, prior['repository'], identity['commit'])
+    if not collector_matches(value):
+        raise Unavailable('Recollected baseline does not match the pinned collector')
+    return value, {**identity, 'source': 'recollected-release-tag', 'collector': TOOL,
+                   'attached_collector': prior.get('collector'), 'status': value['status']}
+
+
 def compare(candidate, prior, identity, executable, root, scratch, log):
     report = {'schema_version': 1, 'mode': 'report-only', 'repository': candidate['repository'],
               'commit': candidate['commit'], 'baseline': identity, 'collection': candidate['status']}
@@ -177,6 +208,8 @@ def compare(candidate, prior, identity, executable, root, scratch, log):
         return {**report, 'status': 'unavailable', 'reason': candidate['reason']}
     if prior is None or prior['status'] != 'complete':
         return {**report, 'status': 'unavailable', 'reason': 'No complete release baseline'}
+    if not collector_matches(candidate) or not collector_matches(prior):
+        return {**report, 'status': 'unavailable', 'reason': 'Collector versions differ; a release baseline must be recollected'}
     old, new = scratch / 'baseline.json', scratch / 'candidate.json'
     write(old, prior['evidence'])
     write(new, candidate['evidence'])
@@ -197,6 +230,12 @@ def compare(candidate, prior, identity, executable, root, scratch, log):
 def summary(report):
     lines = ['## Public interface evidence', '', '**Report only; no version or compatibility decision.**', '',
              '- Collection: ' + report.get('collection', 'failed'), '- Comparison: ' + report['status']]
+    identity = report.get('baseline', {})
+    if identity.get('source') == 'recollected-release-tag':
+        lines += ['- Baseline: recollected from ' + identity['tag'] + ' (' + identity['commit']
+                  + ') with collector ' + identity['collector']['version']]
+    if identity.get('reason'):
+        lines += ['- Baseline: ' + identity['reason']]
     if report.get('counts'):
         lines += ['- ' + key + ': ' + str(count) for key, count in report['counts'].items()]
     lines += ['', 'See api-evidence.json and api-report.json for source identity, scope, gaps and field-level changes.', '']
@@ -218,6 +257,11 @@ def report(root, repository, commit, executable=None):
         prior, identity = None, {'status': 'unavailable', 'reason': type(error).__name__}
     try:
         executable = executable or tool(root, scratch, output / 'collection.log')
+        try:
+            prior, identity = recollect(prior, identity, executable, root, scratch, output)
+        except Exception as error:
+            prior, identity = None, {**identity, 'status': 'unavailable',
+                                    'reason': str(error) if isinstance(error, Unavailable) else type(error).__name__}
         candidate = collect(executable, root, scratch, output, repository, commit)
         result = compare(candidate, prior, identity, executable, root, scratch, output / 'collection.log')
     except Exception as error:
