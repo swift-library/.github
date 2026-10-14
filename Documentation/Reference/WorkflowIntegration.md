@@ -75,9 +75,30 @@ module name and copyright owner before their first validation or publication.
 ## Source policy
 
 Call `.github/workflows/policy.yml` at the same reviewed full commit SHA from a
-job named `policy`. The caller runs on pull requests and default-branch pushes
-with `contents: read`; include the `opened`, `synchronize`, `reopened` and
-`edited` pull request activity types so title corrections rerun the check.
+job named `policy` in a separate caller, `.github/workflows/source-policy.yml`.
+That caller runs on default-branch pushes and the `opened`, `synchronize`,
+`reopened` and `edited` pull request activity types, with `contents: read`.
+Title corrections rerun only policy. The validation caller runs on
+`opened`, `synchronize` and `reopened`, pushes to `master` and
+`workflow_dispatch`. Retain its existing job identifiers and required check
+contexts, including `validate / result` for shared package validation.
+Do not skip validation with a job condition on `edited`: a skipped check on
+the same commit can replace a failing required result.
+
+Both callers use workflow-level concurrency:
+
+```yaml
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+```
+
+The workflow name separates policy from validation. Pull requests group by
+number, including contributions from forks; pushes group by branch ref.
+Release validation and publication callers have no cancelling concurrency
+group. Publication serializes each tag with `cancel-in-progress: false`.
+Release validation builds clean, independently of build caches.
+
 The required check is `policy / policy`. Pull requests check the title for
 Conventional Commit syntax, attribution and unapproved terms, then scan only
 added lines. Contributor identities and signatures do not block pull requests.
