@@ -6,6 +6,7 @@ python3 Scripts/sync-policy-workflow.py --check
 python3 Scripts/sync-evidence-workflow.py --check
 python3 Scripts/sync-version-workflows.py --check
 python3 Scripts/sync-api-workflows.py --check
+python3 -B Scripts/render-profile.py --check
 python3 -B -m unittest discover -s Tests -v
 actionlint .github/workflows/*.yml
 git diff --check HEAD

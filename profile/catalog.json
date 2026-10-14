@@ -1,0 +1,99 @@
+{
+  "organization": "swift-library",
+  "promise": {
+    "heading": "Swift packages for apps, developer tools, and AI agents.",
+    "secondary": "Each one is versioned on its own and tested on the Swift versions and platforms it supports.",
+    "description": "Swift packages for apps, developer tools, and AI agents."
+  },
+  "navigation": {
+    "documentation": "swift-library.github.io",
+    "standards": ".github"
+  },
+  "groups": [
+    {
+      "title": "Ship and maintain packages",
+      "repositories": [
+        {
+          "name": "swift-interface-distiller",
+          "summary": "Collect, query, and compare public-interface evidence from compiler reports."
+        },
+        {
+          "name": "swift-semver",
+          "summary": "Parse, compare, constrain, and increment SemVer 2.0.0 versions using only the Swift standard library."
+        },
+        {
+          "name": "swift-benchmark",
+          "summary": "Catch performance regressions beside your tests with JSON baselines and metric budgets."
+        },
+        {
+          "name": "swift-gyb",
+          "summary": "Generate Swift sources and resource files from Python templates during SwiftPM builds."
+        },
+        {
+          "name": "swift-package-template",
+          "summary": "Start a named Swift package with one command and shared CI and release checks."
+        }
+      ]
+    },
+    {
+      "title": "Build apps",
+      "repositories": [
+        {
+          "name": "swift-data-writable",
+          "summary": "Insert, delete, and reorder SwiftData query results through a projected collection."
+        },
+        {
+          "name": "swift-userdefault",
+          "summary": "Persist primitives, raw-value enums, and Codable models through one UserDefaults property wrapper."
+        },
+        {
+          "name": "swift-redux",
+          "summary": "Manage unidirectional app state with one store, reducers, middleware, and live subscriptions."
+        },
+        {
+          "name": "swift-pdf",
+          "summary": "Build PDF viewers in SwiftUI with search, page overlays, and navigation driven by your controls."
+        }
+      ]
+    },
+    {
+      "title": "Services and AI",
+      "repositories": [
+        {
+          "name": "swift-codex",
+          "summary": "Drive the Codex CLI from Swift through separate exec, App Server, and MCP interfaces."
+        },
+        {
+          "name": "swift-appstoreconnect",
+          "summary": "Build typed App Store Connect integrations and preview CLI writes before confirming them."
+        },
+        {
+          "name": "swift-json-schema",
+          "summary": "Validate JSON against JSON Schema without losing number precision."
+        }
+      ]
+    },
+    {
+      "title": "Command line",
+      "repositories": [
+        {
+          "name": "swift-sh",
+          "summary": "Run single-file Swift scripts with package dependencies declared inline."
+        },
+        {
+          "name": "homebrew-tap",
+          "summary": "Install swift-library command-line tools from release archives verified by SHA-256."
+        }
+      ]
+    },
+    {
+      "title": "Agent skills",
+      "repositories": [
+        {
+          "name": "skills",
+          "summary": "Agent skills for Swift packages and Apple platforms, installable individually."
+        }
+      ]
+    }
+  ]
+}

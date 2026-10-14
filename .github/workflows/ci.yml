@@ -38,3 +38,7 @@ jobs:
         run: test "$ICON_RESULT" = success
       - name: Validate shared standards
         run: Scripts/check
+      - name: Check public catalog membership
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 -B Scripts/render-profile.py --check --check-membership

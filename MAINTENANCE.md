@@ -58,6 +58,11 @@ validation. The pinned generator and design family are also checked weekly.
 
 ## GitHub Settings
 
+**Presentation.** The organization account description follows the promise
+heading in `profile/catalog.json`. Repository descriptions and topics follow
+the copy rules in [DESIGN.md](DESIGN.md); each README tagline equals its
+repository description. Verify these fields after publication.
+
 **Merging.** Squash merge only, with the pull request title as the commit
 subject and an empty commit body. Merge commits and rebase merges
 are off, and merged branches are deleted.
