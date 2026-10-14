@@ -17,9 +17,9 @@ from urllib.request import Request, urlopen
 
 TOOL = {
     'repository': 'swift-library/swift-interface-distiller',
-    'version': '0.1.2',
-    'commit': '983b7af4052edd018c7d5becd5c91276a24c4fb3',
-    'archive_sha256': '1284fe74c84644525840e01e39d068c04a1e3e28275c6304cf84ae92fd3644fc',
+    'version': '0.2.0',
+    'commit': 'c6269c2d3707a599c613748c44130aa24afb15b8',
+    'archive_sha256': '40a1e9c6d29413809298e1a0efad69129b559b2fab6ad3a2b2fe994df2294dda',
 }
 ASSET = 'api-evidence.json'
 LIMIT = 256 * 1024 * 1024

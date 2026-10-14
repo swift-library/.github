@@ -161,7 +161,11 @@ This observation job uses macOS 26 and Xcode 26.6. Those are the collector's
 execution configuration, not additional claims about the package's minimum
 compiler or supported platforms. Its SwiftPM collection scope is public/open
 interfaces of library products, with SPI and source locations excluded. The
-snapshot records the actual compiler build, SDK and target. Conditional APIs
+scope excludes synthesized per-conformer copies and retains original
+protocol-extension declarations and conformances. This recorded policy is not a
+collection gap. Canonical snapshots use schema 2.0; out-of-scope references are
+external observations, not unresolved gaps. The snapshot records the actual
+compiler build, SDK and target. Conditional APIs
 outside this configuration remain unobserved; this job does not schedule a
 package platform matrix.
 
