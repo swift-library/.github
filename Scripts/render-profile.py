@@ -59,14 +59,15 @@ def render(catalog):
         "</p>", "", "</div>", "",
     ]
     for group in catalog["groups"]:
-        lines += [f'### {group["title"]}', "", "| | Repository |", "| --- | --- |"]
+        lines += [f'### {group["title"]}', "", "<table>", "<tbody>"]
         for item in group["repositories"]:
             name = item["name"]
             url = f"https://github.com/{organization}/{name}"
             logo = f"https://raw.githubusercontent.com/{organization}/{name}/HEAD/Documentation/Assets/Logo.svg"
             summary = escape(item["summary"]).replace("|", "&#124;")
-            lines.append(f'| <a href="{url}"><img src="{logo}" width="40" alt="{name} logo"></a> | **[{name}]({url})**<br>{summary} |')
-        lines.append("")
+            lines.append(f'<tr><td><a href="{url}"><img src="{logo}" width="40" alt="{name} logo"></a></td>'
+                         f'<td><strong><a href="{url}">{name}</a></strong><br>{summary}</td></tr>')
+        lines += ["</tbody>", "</table>", ""]
     lines += ['<sub>Maintained by <a href="https://github.com/showxu">@showxu</a> (<a href="https://showxu.github.io">https://showxu.github.io</a>).</sub>', ""]
     return "\n".join(lines)
 

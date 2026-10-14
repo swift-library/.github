@@ -169,6 +169,15 @@ preferred, not required. Name a distinction supported by current code, tests,
 or CI. Use present tense, sentence case, and a final period. Avoid hype,
 unverifiable superiority, and openings such as “A Swift package that”.
 
+Visitor-facing profile and website copy, descriptions, and taglines state what
+the reader gets. Process terms such as evidence, independent versioning,
+signed tags, and provenance belong in standards documents and repositories
+whose products provide them.
+
+The tagline, Overview opening, and Quick look each add different information.
+Overview explains why and how in other words. Quick look needs an introductory
+sentence only when it adds information.
+
 Repository descriptions, taglines, catalog summaries, and social-card About
 text use the same sentence, at most 110 characters. Keep drifting counts and release
 versions out of these short fields; put them in generated or measured
@@ -194,7 +203,8 @@ by [Brand/Avatar/README.md](Brand/Avatar/README.md).
 ordering, and reviewed outcome sentences. `Scripts/render-profile.py`
 generates the profile; CI checks byte-identical output and complete membership
 of public self-owned repositories. Each catalog row has a linked 40 px icon,
-a bold linked name, and the outcome sentence. Navigation repositories appear
+a bold linked name, and the outcome sentence, in HTML tables without header
+rows. Navigation repositories appear
 in the header rather than as duplicate catalog rows. Do not assemble
 membership-dependent presentation artifacts by hand.
 

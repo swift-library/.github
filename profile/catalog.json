@@ -1,9 +1,9 @@
 {
   "organization": "swift-library",
   "promise": {
-    "heading": "Focused Swift packages, released independently, with evidence you can inspect.",
-    "secondary": "Signed releases ship compiler and platform validation from each package’s declared CI matrix, plus public API evidence.",
-    "description": "Focused Swift packages, independently released with signed tags, declared CI validation, and public API evidence."
+    "heading": "Swift packages for apps, developer tools, and AI agents.",
+    "secondary": "Each one is versioned on its own and tested on the Swift versions and platforms it supports.",
+    "description": "Swift packages for apps, developer tools, and AI agents."
   },
   "navigation": {
     "documentation": "swift-library.github.io",

@@ -5,10 +5,10 @@
   <img src="https://raw.githubusercontent.com/swift-library/.github/master/Documentation/Assets/Logo.svg" width="128" alt="swift-library umbrella logo">
 </p>
 
-<h1 align="center">Focused Swift packages, released independently, with evidence you can inspect.</h1>
+<h1 align="center">Swift packages for apps, developer tools, and AI agents.</h1>
 
 <p align="center">
-  Signed releases ship compiler and platform validation from each package’s declared CI matrix, plus public API evidence.
+  Each one is versioned on its own and tested on the Swift versions and platforms it supports.
 </p>
 
 <p align="center">
@@ -22,42 +22,52 @@
 
 ### Ship and maintain packages
 
-| | Repository |
-| --- | --- |
-| <a href="https://github.com/swift-library/swift-interface-distiller"><img src="https://raw.githubusercontent.com/swift-library/swift-interface-distiller/HEAD/Documentation/Assets/Logo.svg" width="40" alt="swift-interface-distiller logo"></a> | **[swift-interface-distiller](https://github.com/swift-library/swift-interface-distiller)**<br>Collect, query, and compare public-interface evidence from compiler reports. |
-| <a href="https://github.com/swift-library/swift-semver"><img src="https://raw.githubusercontent.com/swift-library/swift-semver/HEAD/Documentation/Assets/Logo.svg" width="40" alt="swift-semver logo"></a> | **[swift-semver](https://github.com/swift-library/swift-semver)**<br>Parse, compare, constrain, and increment SemVer 2.0.0 versions using only the Swift standard library. |
-| <a href="https://github.com/swift-library/swift-benchmark"><img src="https://raw.githubusercontent.com/swift-library/swift-benchmark/HEAD/Documentation/Assets/Logo.svg" width="40" alt="swift-benchmark logo"></a> | **[swift-benchmark](https://github.com/swift-library/swift-benchmark)**<br>Catch performance regressions beside your tests with JSON baselines and metric budgets. |
-| <a href="https://github.com/swift-library/swift-gyb"><img src="https://raw.githubusercontent.com/swift-library/swift-gyb/HEAD/Documentation/Assets/Logo.svg" width="40" alt="swift-gyb logo"></a> | **[swift-gyb](https://github.com/swift-library/swift-gyb)**<br>Generate Swift sources and resource files from Python templates during SwiftPM builds. |
-| <a href="https://github.com/swift-library/swift-package-template"><img src="https://raw.githubusercontent.com/swift-library/swift-package-template/HEAD/Documentation/Assets/Logo.svg" width="40" alt="swift-package-template logo"></a> | **[swift-package-template](https://github.com/swift-library/swift-package-template)**<br>Start a named Swift package with one command and shared CI and release checks. |
+<table>
+<tbody>
+<tr><td><a href="https://github.com/swift-library/swift-interface-distiller"><img src="https://raw.githubusercontent.com/swift-library/swift-interface-distiller/HEAD/Documentation/Assets/Logo.svg" width="40" alt="swift-interface-distiller logo"></a></td><td><strong><a href="https://github.com/swift-library/swift-interface-distiller">swift-interface-distiller</a></strong><br>Collect, query, and compare public-interface evidence from compiler reports.</td></tr>
+<tr><td><a href="https://github.com/swift-library/swift-semver"><img src="https://raw.githubusercontent.com/swift-library/swift-semver/HEAD/Documentation/Assets/Logo.svg" width="40" alt="swift-semver logo"></a></td><td><strong><a href="https://github.com/swift-library/swift-semver">swift-semver</a></strong><br>Parse, compare, constrain, and increment SemVer 2.0.0 versions using only the Swift standard library.</td></tr>
+<tr><td><a href="https://github.com/swift-library/swift-benchmark"><img src="https://raw.githubusercontent.com/swift-library/swift-benchmark/HEAD/Documentation/Assets/Logo.svg" width="40" alt="swift-benchmark logo"></a></td><td><strong><a href="https://github.com/swift-library/swift-benchmark">swift-benchmark</a></strong><br>Catch performance regressions beside your tests with JSON baselines and metric budgets.</td></tr>
+<tr><td><a href="https://github.com/swift-library/swift-gyb"><img src="https://raw.githubusercontent.com/swift-library/swift-gyb/HEAD/Documentation/Assets/Logo.svg" width="40" alt="swift-gyb logo"></a></td><td><strong><a href="https://github.com/swift-library/swift-gyb">swift-gyb</a></strong><br>Generate Swift sources and resource files from Python templates during SwiftPM builds.</td></tr>
+<tr><td><a href="https://github.com/swift-library/swift-package-template"><img src="https://raw.githubusercontent.com/swift-library/swift-package-template/HEAD/Documentation/Assets/Logo.svg" width="40" alt="swift-package-template logo"></a></td><td><strong><a href="https://github.com/swift-library/swift-package-template">swift-package-template</a></strong><br>Start a named Swift package with one command and shared CI and release checks.</td></tr>
+</tbody>
+</table>
 
 ### Build apps
 
-| | Repository |
-| --- | --- |
-| <a href="https://github.com/swift-library/swift-data-writable"><img src="https://raw.githubusercontent.com/swift-library/swift-data-writable/HEAD/Documentation/Assets/Logo.svg" width="40" alt="swift-data-writable logo"></a> | **[swift-data-writable](https://github.com/swift-library/swift-data-writable)**<br>Insert, delete, and reorder SwiftData query results through a projected collection. |
-| <a href="https://github.com/swift-library/swift-userdefault"><img src="https://raw.githubusercontent.com/swift-library/swift-userdefault/HEAD/Documentation/Assets/Logo.svg" width="40" alt="swift-userdefault logo"></a> | **[swift-userdefault](https://github.com/swift-library/swift-userdefault)**<br>Persist primitives, raw-value enums, and Codable models through one UserDefaults property wrapper. |
-| <a href="https://github.com/swift-library/swift-redux"><img src="https://raw.githubusercontent.com/swift-library/swift-redux/HEAD/Documentation/Assets/Logo.svg" width="40" alt="swift-redux logo"></a> | **[swift-redux](https://github.com/swift-library/swift-redux)**<br>Manage unidirectional app state with one store, reducers, middleware, and live subscriptions. |
-| <a href="https://github.com/swift-library/swift-pdf"><img src="https://raw.githubusercontent.com/swift-library/swift-pdf/HEAD/Documentation/Assets/Logo.svg" width="40" alt="swift-pdf logo"></a> | **[swift-pdf](https://github.com/swift-library/swift-pdf)**<br>Build PDF viewers in SwiftUI with search, page overlays, and navigation driven by your controls. |
+<table>
+<tbody>
+<tr><td><a href="https://github.com/swift-library/swift-data-writable"><img src="https://raw.githubusercontent.com/swift-library/swift-data-writable/HEAD/Documentation/Assets/Logo.svg" width="40" alt="swift-data-writable logo"></a></td><td><strong><a href="https://github.com/swift-library/swift-data-writable">swift-data-writable</a></strong><br>Insert, delete, and reorder SwiftData query results through a projected collection.</td></tr>
+<tr><td><a href="https://github.com/swift-library/swift-userdefault"><img src="https://raw.githubusercontent.com/swift-library/swift-userdefault/HEAD/Documentation/Assets/Logo.svg" width="40" alt="swift-userdefault logo"></a></td><td><strong><a href="https://github.com/swift-library/swift-userdefault">swift-userdefault</a></strong><br>Persist primitives, raw-value enums, and Codable models through one UserDefaults property wrapper.</td></tr>
+<tr><td><a href="https://github.com/swift-library/swift-redux"><img src="https://raw.githubusercontent.com/swift-library/swift-redux/HEAD/Documentation/Assets/Logo.svg" width="40" alt="swift-redux logo"></a></td><td><strong><a href="https://github.com/swift-library/swift-redux">swift-redux</a></strong><br>Manage unidirectional app state with one store, reducers, middleware, and live subscriptions.</td></tr>
+<tr><td><a href="https://github.com/swift-library/swift-pdf"><img src="https://raw.githubusercontent.com/swift-library/swift-pdf/HEAD/Documentation/Assets/Logo.svg" width="40" alt="swift-pdf logo"></a></td><td><strong><a href="https://github.com/swift-library/swift-pdf">swift-pdf</a></strong><br>Build PDF viewers in SwiftUI with search, page overlays, and navigation driven by your controls.</td></tr>
+</tbody>
+</table>
 
 ### Services and AI
 
-| | Repository |
-| --- | --- |
-| <a href="https://github.com/swift-library/swift-codex"><img src="https://raw.githubusercontent.com/swift-library/swift-codex/HEAD/Documentation/Assets/Logo.svg" width="40" alt="swift-codex logo"></a> | **[swift-codex](https://github.com/swift-library/swift-codex)**<br>Drive the Codex CLI from Swift through separate exec, App Server, and MCP interfaces. |
-| <a href="https://github.com/swift-library/swift-appstoreconnect"><img src="https://raw.githubusercontent.com/swift-library/swift-appstoreconnect/HEAD/Documentation/Assets/Logo.svg" width="40" alt="swift-appstoreconnect logo"></a> | **[swift-appstoreconnect](https://github.com/swift-library/swift-appstoreconnect)**<br>Build typed App Store Connect integrations and preview CLI writes before confirming them. |
-| <a href="https://github.com/swift-library/swift-json-schema"><img src="https://raw.githubusercontent.com/swift-library/swift-json-schema/HEAD/Documentation/Assets/Logo.svg" width="40" alt="swift-json-schema logo"></a> | **[swift-json-schema](https://github.com/swift-library/swift-json-schema)**<br>Validate JSON against JSON Schema without losing number precision. |
+<table>
+<tbody>
+<tr><td><a href="https://github.com/swift-library/swift-codex"><img src="https://raw.githubusercontent.com/swift-library/swift-codex/HEAD/Documentation/Assets/Logo.svg" width="40" alt="swift-codex logo"></a></td><td><strong><a href="https://github.com/swift-library/swift-codex">swift-codex</a></strong><br>Drive the Codex CLI from Swift through separate exec, App Server, and MCP interfaces.</td></tr>
+<tr><td><a href="https://github.com/swift-library/swift-appstoreconnect"><img src="https://raw.githubusercontent.com/swift-library/swift-appstoreconnect/HEAD/Documentation/Assets/Logo.svg" width="40" alt="swift-appstoreconnect logo"></a></td><td><strong><a href="https://github.com/swift-library/swift-appstoreconnect">swift-appstoreconnect</a></strong><br>Build typed App Store Connect integrations and preview CLI writes before confirming them.</td></tr>
+<tr><td><a href="https://github.com/swift-library/swift-json-schema"><img src="https://raw.githubusercontent.com/swift-library/swift-json-schema/HEAD/Documentation/Assets/Logo.svg" width="40" alt="swift-json-schema logo"></a></td><td><strong><a href="https://github.com/swift-library/swift-json-schema">swift-json-schema</a></strong><br>Validate JSON against JSON Schema without losing number precision.</td></tr>
+</tbody>
+</table>
 
 ### Command line
 
-| | Repository |
-| --- | --- |
-| <a href="https://github.com/swift-library/swift-sh"><img src="https://raw.githubusercontent.com/swift-library/swift-sh/HEAD/Documentation/Assets/Logo.svg" width="40" alt="swift-sh logo"></a> | **[swift-sh](https://github.com/swift-library/swift-sh)**<br>Run single-file Swift scripts with package dependencies declared inline. |
-| <a href="https://github.com/swift-library/homebrew-tap"><img src="https://raw.githubusercontent.com/swift-library/homebrew-tap/HEAD/Documentation/Assets/Logo.svg" width="40" alt="homebrew-tap logo"></a> | **[homebrew-tap](https://github.com/swift-library/homebrew-tap)**<br>Install swift-library command-line tools from release archives verified by SHA-256. |
+<table>
+<tbody>
+<tr><td><a href="https://github.com/swift-library/swift-sh"><img src="https://raw.githubusercontent.com/swift-library/swift-sh/HEAD/Documentation/Assets/Logo.svg" width="40" alt="swift-sh logo"></a></td><td><strong><a href="https://github.com/swift-library/swift-sh">swift-sh</a></strong><br>Run single-file Swift scripts with package dependencies declared inline.</td></tr>
+<tr><td><a href="https://github.com/swift-library/homebrew-tap"><img src="https://raw.githubusercontent.com/swift-library/homebrew-tap/HEAD/Documentation/Assets/Logo.svg" width="40" alt="homebrew-tap logo"></a></td><td><strong><a href="https://github.com/swift-library/homebrew-tap">homebrew-tap</a></strong><br>Install swift-library command-line tools from release archives verified by SHA-256.</td></tr>
+</tbody>
+</table>
 
 ### Agent skills
 
-| | Repository |
-| --- | --- |
-| <a href="https://github.com/swift-library/skills"><img src="https://raw.githubusercontent.com/swift-library/skills/HEAD/Documentation/Assets/Logo.svg" width="40" alt="skills logo"></a> | **[skills](https://github.com/swift-library/skills)**<br>Agent skills for Swift packages and Apple platforms, installable individually. |
+<table>
+<tbody>
+<tr><td><a href="https://github.com/swift-library/skills"><img src="https://raw.githubusercontent.com/swift-library/skills/HEAD/Documentation/Assets/Logo.svg" width="40" alt="skills logo"></a></td><td><strong><a href="https://github.com/swift-library/skills">skills</a></strong><br>Agent skills for Swift packages and Apple platforms, installable individually.</td></tr>
+</tbody>
+</table>
 
 <sub>Maintained by <a href="https://github.com/showxu">@showxu</a> (<a href="https://showxu.github.io">https://showxu.github.io</a>).</sub>
