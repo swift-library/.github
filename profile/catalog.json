@@ -15,7 +15,7 @@
       "repositories": [
         {
           "name": "swift-interface-distiller",
-          "summary": "Collect, query, and compare public-interface evidence from compiler reports."
+          "summary": "Distill a Swift package to its public API: a compact interface to read, evidence to query and diff."
         },
         {
           "name": "swift-semver",
