@@ -169,8 +169,8 @@ preferred, not required. Name a distinction supported by current code, tests,
 or CI. Use present tense, sentence case, and a final period. Avoid hype,
 unverifiable superiority, and openings such as “A Swift package that”.
 
-Descriptions, taglines, catalog summaries, and social-card About text use the
-same sentence, at most 110 characters. Keep drifting counts and release
+Repository descriptions, taglines, catalog summaries, and social-card About
+text use the same sentence, at most 110 characters. Keep drifting counts and release
 versions out of these short fields; put them in generated or measured
 documentation. Fixed standard identifiers, such as SemVer 2.0.0, can identify
 the implemented contract. Keep README and DocC introductions consistent.
@@ -187,7 +187,7 @@ across the family without per-repository exceptions.
 The centered profile header uses the existing 128 px red-orange four-tile
 umbrella mark, the organization promise as a heading, one secondary line, and
 Documentation · Contributing · Security · Support. The account description is
-the compact form of the same promise. The Swift bird avatar remains governed
+the compact form of the same promise, at most 160 characters. The Swift bird avatar remains governed
 by [Brand/Avatar/README.md](Brand/Avatar/README.md).
 
 `profile/catalog.json` owns the promise, navigation roles, reader-job groups,
