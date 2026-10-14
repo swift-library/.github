@@ -98,6 +98,9 @@ number, including contributions from forks; pushes group by branch ref.
 Release validation and publication callers have no cancelling concurrency
 group. Publication serializes each tag with `cancel-in-progress: false`.
 Release validation builds clean, independently of build caches.
+Weekly icon auditing uses a dedicated reusable caller. The documentation
+site's weekly refresh dispatches its validation caller; successful
+default-branch site builds publish through a separate non-cancelling workflow.
 
 The required check is `policy / policy`. Pull requests check the title for
 Conventional Commit syntax, attribution and unapproved terms, then scan only

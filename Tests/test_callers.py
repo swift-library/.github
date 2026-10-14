@@ -17,6 +17,14 @@ class CallerTests(unittest.TestCase):
                          {'opened', 'synchronize', 'reopened'})
         self.assertNotIn('  policy:', workflow)
         self.assertIn('  result:', workflow)
+        self.assertNotIn('  schedule:', workflow)
+        self.assertIn('uses: ./.github/workflows/icon-audit.yml', workflow)
+
+    def test_weekly_icon_audit_runs_the_same_check_as_required_validation(self):
+        workflow = (WORKFLOWS / 'icon-audit.yml').read_text()
+        self.assertIn('  schedule:', workflow)
+        self.assertIn('  workflow_call:', workflow)
+        self.assertIn('Scripts/check-icons.py --generator', workflow)
 
     def test_policy_has_its_own_caller_and_preserves_the_context(self):
         workflow = (WORKFLOWS / 'source-policy.yml').read_text()
