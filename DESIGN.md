@@ -170,6 +170,8 @@ Entries under `icons` render repository logos at 1024 px with
 [showxu/skills](https://github.com/showxu/skills). Consumers pin the generator to
 a reviewed full commit SHA. Colors are OKLCH. Regenerate after changing
 an entry and replace the owning repository’s `Logo.svg` and `Logo.png`.
+Custom glyph shapes use plain unit coordinates; the generator owns browser
+rendering correctness.
 
 The `app_icons` entry supplies `apple-app-icon-design` with the organization
 avatar’s background, material groups, and source layers. Its dot field uses
@@ -424,16 +426,14 @@ appearances and web sizes derive from these layers and this entry.
       "vivid": 1.1,
       "custom_glyph": {
         "style": "stroke",
-        "width": 14,
-        "transform": "scale(0.01)",
-        "d": "M-58 -86 H22 L60 -48 V86 H-58 Z M22 -86 V-48 H60 M-32 -10 H34 M-32 20 H34 M-32 50 H10"
+        "width": 0.14,
+        "d": "M-0.58 -0.86 H0.22 L0.60 -0.48 V0.86 H-0.58 Z M0.22 -0.86 V-0.48 H0.60 M-0.32 -0.10 H0.34 M-0.32 0.20 H0.34 M-0.32 0.50 H0.10"
       }
     },
     "swift-interface-distiller": {
       "hue": 214,
       "mode": "glow",
       "bands": 3,
-      "glyph": "brackets",
       "texture": "grid",
       "glyph_rotation": -45,
       "face_colors": [
@@ -444,7 +444,14 @@ appearances and web sizes derive from these layers and this entry.
         "oklch(0.53 0.12 214)",
         "oklch(0.62 0.15 214)",
         "oklch(0.71 0.16 214)"
-      ]
+      ],
+      "glyph_scale": 0.34,
+      "custom_glyph": {
+        "style": "stroke",
+        "width": 0.13,
+        "d": "M-0.20 -0.82 H0.20 V-0.37 L0.76 0.64 Q0.84 0.80 0.64 0.80 H-0.64 Q-0.84 0.80 -0.76 0.64 L-0.20 -0.37 Z M-0.30 -0.82 H0.30",
+        "extra": "M-0.57 0.30 H0.57 M0.19 -0.02 H0.38 M0.39 0.57 H0.67"
+      }
     }
   },
   "app_icons": {
