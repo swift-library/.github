@@ -100,6 +100,16 @@ including its required checks, signatures and pull-request requirements.
 | `swift-appstoreconnect` | `policy / policy`, `validate / result` |
 | `swift-interface-distiller` | `policy / policy`, `validate / result` |
 
+Every row keeps its existing required contexts when workflows are split.
+`policy / policy` comes from the `policy` job in `source-policy.yml`, which
+includes pull-request title edits. Validation callers run on `opened`,
+`synchronize`, `reopened`, `master` pushes and manual dispatch. Each caller
+cancels superseded runs using its workflow name and pull-request number or
+branch ref; release and publication runs are never cancelled. See
+[Workflow integration](Documentation/Reference/WorkflowIntegration.md#source-policy)
+for the caller contract. Check this table against active rulesets before
+upgrading callers, and verify the resulting check names on their pull requests.
+
 A renamed or added CI job updates its ruleset and this table in the same
 sitting; until then every pull request in that repository waits on the old
 name.
