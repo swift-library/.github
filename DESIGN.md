@@ -126,7 +126,8 @@ quiet: light neutral surfaces, near-black text, no decoration.
 Social preview text uses Inter and Inter Display (SIL Open Font License),
 converted to outlines so cards never depend on installed fonts. Repository
 names are bold display weight; summaries are regular weight and wrap to at
-most two lines. Terminal demos use the viewer's monospace font at 14 px.
+most three lines at 32 px. Repository names wrap to at most two lines at
+76 px. Terminal demos use the viewer's monospace font at 14 px.
 
 ## Layout
 
@@ -143,8 +144,11 @@ its linked name; the umbrella mark at the top of the organization profile is
 the only standalone icon. Text remains text.
 
 Every repository uses the same centered header: a linked 160 px logo, an `h1`
-name, the tagline, exactly four flat badges, and the navigation row. Badge order
-is CI, Swift X.Y+, platforms, license. Use `CI`, `Swift X.Y+`, `Platforms: …`,
+name, the tagline, applicable flat badges, and the navigation row. Badge order
+is CI, Swift X.Y+, platforms, license. Show only badges supported by the
+repository's workflow, package requirements, or license. Repositories without
+a package compiler or runtime platform contract omit those badges. Use `CI`,
+`Swift X.Y+`, `Platforms: …`,
 and `License: Apache-2.0 WITH Swift-exception` for their accessible labels; the
 Swift badge uses Badge Swift. Values come from the repository's current
 requirements. The tagline equals the GitHub description.
