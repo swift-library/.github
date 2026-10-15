@@ -37,11 +37,33 @@ def job():
       - uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1
         with:
           xcode-version: '26.6'
-      - name: Collect and compare public interfaces
+      - name: Verify release baseline inputs
+        id: baseline
         env:
           GH_TOKEN: ${{ github.token }}
+          API_BASELINE_CACHE: ${{ inputs.ref == '' && github.event_name != 'release' && !startsWith(github.ref, 'refs/tags/') }}
         run: |
-''' + embedded('collect') + '''      - name: Check API evidence paths
+''' + embedded('prepare-baseline') + '''      - name: Restore recollected release baseline
+        id: baseline_cache
+        if: steps.baseline.outputs.cache_key != ''
+        continue-on-error: true
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .build/shared-api/baseline-cache
+          key: ${{ steps.baseline.outputs.cache_key }}
+      - name: Verify or recollect release baseline
+        id: recollect
+        run: python3 .build/shared/api-evidence.py recollect-baseline
+      - name: Cache verified release baseline
+        if: steps.recollect.outputs.cache_ready == 'true' && steps.baseline_cache.outputs.cache-hit != 'true'
+        continue-on-error: true
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .build/shared-api/baseline-cache
+          key: ${{ steps.baseline.outputs.cache_key }}
+      - name: Collect and compare public interfaces
+        run: python3 .build/shared/api-evidence.py collect --prepared-baseline
+      - name: Check API evidence paths
         id: api_evidence
         if: always()
         env:

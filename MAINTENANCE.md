@@ -133,6 +133,10 @@ No Actions secrets or variables exist at organization or repository level.
 above. The declaration owns exact API parameters; the table owns job names.
 Changes to either must accompany the corresponding GitHub setting change.
 The checker reads metadata only and never retrieves secret values.
+It also reports shared-workflow pins against the latest shared `master` commit
+for self-owned repositories. Pin drift and unavailable pin observations do not
+change its exit status: callers advance through reviewed pull requests, while
+the settings declaration remains enforced.
 
 ```json
 {

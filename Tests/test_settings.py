@@ -1,6 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0 WITH Swift-exception
 from copy import deepcopy
+import base64
+from contextlib import redirect_stdout
 import importlib.util
+import io
 import json
 from pathlib import Path
 import subprocess
@@ -76,6 +79,64 @@ class SettingsTests(unittest.TestCase):
                 patch.object(settings, "legacy_protection", return_value={"lock_branch": {"enabled": True}}):
             findings = settings.check_repository(repository, self.declared, self.checks)
         self.assertEqual(findings, [path + ".legacy_branch_protection: differs from declaration"])
+
+    def test_pin_report_lists_only_outdated_callers_and_excludes_forks(self):
+        target = 'a' * 40
+        repositories = [{'name': name, 'fork': fork, 'default_branch': 'master'}
+                        for name, fork in [('current', False), ('outdated', False), ('fork', True), ('local', False)]]
+        callers = {'current': [{'workflow': '.github/workflows/ci.yml', 'ref': target}],
+                   'outdated': [{'workflow': '.github/workflows/ci.yml', 'ref': 'b' * 40},
+                                {'workflow': '.github/workflows/source-policy.yml', 'ref': target}],
+                   'local': []}
+        with patch.object(settings, 'gh', return_value={'sha': target}), \
+                patch.object(settings, 'collection', return_value=repositories), \
+                patch.object(settings, 'shared_callers', side_effect=lambda org, repository: callers[repository['name']]):
+            report = settings.pin_drift(self.declared)
+        self.assertEqual(report['target'], target)
+        self.assertEqual(report['repositories_with_callers'], 2)
+        self.assertEqual(report['caller_count'], 3)
+        self.assertEqual(report['drift'], [{'repository': 'outdated', 'callers': callers['outdated'][:1]}])
+        self.assertIn('report only', settings.pin_summary(report))
+
+    def test_pin_report_reads_workflow_calls_including_quoted_refs(self):
+        entries = [{'type': 'file', 'name': 'ci.yml', 'path': '.github/workflows/ci.yml', 'url': 'blob'},
+                   {'type': 'file', 'name': 'notes.txt', 'path': '.github/workflows/notes.txt', 'url': 'ignored'}]
+        source = '''jobs:
+  validate:
+    uses: swift-library/.github/.github/workflows/swift-package-ci.yml@old
+  policy:
+    uses: "swift-library/.github/.github/workflows/policy.yml@new"
+  local:
+    uses: ./.github/workflows/local.yml
+'''
+        responses = {'repos/swift-library/package/contents/.github/workflows?ref=master': entries,
+                     'blob': {'content': base64.b64encode(source.encode()).decode()}}
+        with patch.object(settings, 'gh', side_effect=lambda path: responses[path]):
+            callers = settings.shared_callers('swift-library', {'name': 'package', 'default_branch': 'master'})
+        self.assertEqual([caller['ref'] for caller in callers], ['old', 'new'])
+
+    def test_pin_drift_and_unavailable_observations_do_not_change_settings_exit(self):
+        for report in [{'target': 'a' * 40, 'repositories_with_callers': 1, 'caller_count': 1,
+                        'drift': [{'repository': 'package', 'callers': [{'workflow': 'ci.yml', 'ref': 'old'}]}],
+                        'unavailable': []},
+                       {'target': None, 'repositories_with_callers': 0, 'caller_count': 0,
+                        'drift': [], 'unavailable': [{'repository': 'swift-library', 'reason': 'CalledProcessError'}]}]:
+            with self.subTest(report=report), patch.object(settings.sys, 'argv', ['check-settings.py']), \
+                    patch.object(settings, 'check', return_value=[]), \
+                    patch.object(settings, 'pin_drift', return_value=report), redirect_stdout(io.StringIO()):
+                self.assertEqual(settings.main(), 0)
+            with patch.object(settings.sys, 'argv', ['check-settings.py']), \
+                    patch.object(settings, 'check', return_value=['enforced mismatch']), \
+                    patch.object(settings, 'pin_drift', return_value=report), redirect_stdout(io.StringIO()):
+                self.assertEqual(settings.main(), 1)
+
+    def test_unavailable_repository_observation_is_explicit(self):
+        with patch.object(settings, 'gh', return_value={'sha': 'a' * 40}), \
+                patch.object(settings, 'collection', return_value=[{'name': 'private', 'fork': False}]), \
+                patch.object(settings, 'shared_callers', side_effect=ValueError):
+            report = settings.pin_drift(self.declared)
+        self.assertEqual(report['unavailable'], [{'repository': 'private', 'reason': 'ValueError'}])
+        self.assertIn('observation unavailable', settings.pin_summary(report))
 
 
 if __name__ == "__main__":

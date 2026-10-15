@@ -3,6 +3,7 @@
 """Compare MAINTENANCE.md with live public-repository settings, without mutations."""
 
 import argparse
+import base64
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 import json
@@ -151,6 +152,75 @@ def check(settings, checks):
     return sorted(findings)
 
 
+def shared_callers(organization, repository):
+    path = f"repos/{organization}/{repository['name']}/contents/.github/workflows"
+    try:
+        entries = gh(path + "?ref=" + repository["default_branch"])
+    except subprocess.CalledProcessError as error:
+        response = json.loads(error.output)
+        if str(response.get("status")) == "404":
+            return []
+        raise
+    callers = []
+    pattern = re.compile(r"^\s*(?:-\s*)?uses:\s*['\"]?" + re.escape(organization)
+                         + r"/\.github/\.github/workflows/[^@\s]+@([^\s'\"#]+)", re.M)
+    for entry in entries:
+        if entry["type"] != "file" or Path(entry["name"]).suffix not in (".yml", ".yaml"):
+            continue
+        value = gh(entry["url"])
+        source = base64.b64decode(value["content"]).decode()
+        callers += [{"workflow": entry["path"], "ref": match[1]} for match in pattern.finditer(source)]
+    return callers
+
+
+def pin_drift(settings):
+    """Observe reviewed pins separately from enforced repository settings."""
+    organization = settings["organization"]
+    result = {"target": None, "repositories_with_callers": 0, "caller_count": 0,
+              "drift": [], "unavailable": []}
+    try:
+        result["target"] = gh(f"repos/{organization}/.github/commits/master")["sha"]
+        repositories = [repository for repository in collection(f"orgs/{organization}/repos?type=all&per_page=100")
+                        if not repository["fork"]]
+    except (OSError, ValueError, KeyError, subprocess.SubprocessError) as error:
+        result["unavailable"].append({"repository": organization, "reason": type(error).__name__})
+        return result
+
+    def inspect(repository):
+        try:
+            return repository["name"], shared_callers(organization, repository), None
+        except (OSError, ValueError, KeyError, subprocess.SubprocessError) as error:
+            return repository["name"], [], type(error).__name__
+
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        for name, callers, error in executor.map(inspect, sorted(repositories, key=lambda item: item["name"])):
+            if error:
+                result["unavailable"].append({"repository": name, "reason": error})
+            if callers:
+                result["repositories_with_callers"] += 1
+                result["caller_count"] += len(callers)
+                outdated = [caller for caller in callers if caller["ref"] != result["target"]]
+                if outdated:
+                    result["drift"].append({"repository": name, "callers": outdated})
+    return result
+
+
+def pin_summary(report):
+    lines = ["shared pin target: " + (report["target"] or "unavailable")]
+    if report["drift"]:
+        lines += ["shared pin drift (report only):"]
+        for repository in report["drift"]:
+            lines += ["- " + repository["repository"] + ": " + ", ".join(
+                caller["workflow"] + "@" + caller["ref"] for caller in repository["callers"])]
+    else:
+        lines += ["shared pin drift: " + ("none observed" if report["unavailable"] else "none")
+                  + " (" + str(report["repositories_with_callers"])
+                  + " repositories, " + str(report["caller_count"]) + " callers)"]
+    for item in report["unavailable"]:
+        lines += ["shared pin observation unavailable: " + item["repository"] + " (" + item["reason"] + ")"]
+    return "\n".join(lines)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--declaration", type=Path, default=ROOT / "MAINTENANCE.md")
@@ -158,10 +228,13 @@ def main():
     args = parser.parse_args()
     settings, checks = declaration(args.declaration.read_text())
     findings = check(settings, checks)
+    pins = pin_drift(settings)
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(json.dumps({"organization": settings["organization"], "findings": findings}, indent=2) + "\n")
+        args.output.write_text(json.dumps({"organization": settings["organization"], "findings": findings,
+                                          "shared_pin": pins}, indent=2) + "\n")
     print("\n".join(findings) if findings else "settings ok")
+    print(pin_summary(pins))
     return int(bool(findings))
 
 
