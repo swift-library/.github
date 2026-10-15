@@ -91,7 +91,7 @@
       "repositories": [
         {
           "name": "skills",
-          "summary": "Agent skills for Swift packages and Apple platforms, installable individually."
+          "summary": "Build and maintain Swift packages and Apple apps with agent skills in a single plugin."
         }
       ]
     }
