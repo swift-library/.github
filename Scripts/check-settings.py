@@ -11,8 +11,20 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+from urllib.parse import quote
 
 ROOT = Path(__file__).resolve().parent.parent
+SHARED_SURFACE = {
+    ".github/workflows/icon-audit.yml",
+    ".github/workflows/policy.yml",
+    ".github/workflows/swift-package-ci.yml",
+    ".github/workflows/swift-package-release.yml",
+    "Scripts/api-evidence.py",
+    "Scripts/check-evidence.py",
+    "Scripts/check-icons.py",
+    "Scripts/check-policy.py",
+    "Scripts/validate-version",
+}
 
 
 def declaration(text):
@@ -173,13 +185,23 @@ def shared_callers(organization, repository):
     return callers
 
 
+def shared_surface(organization, ref):
+    """Compare Git blob identities, including mode, for reusable automation."""
+    tree = gh(f"repos/{organization}/.github/git/trees/{quote(ref, safe='')}?recursive=1")
+    if tree.get("truncated"):
+        raise ValueError("Shared repository tree is truncated")
+    return {entry["path"]: (entry["mode"], entry["type"], entry["sha"])
+            for entry in tree["tree"] if entry["path"] in SHARED_SURFACE}
+
+
 def pin_drift(settings):
     """Observe reviewed pins separately from enforced repository settings."""
     organization = settings["organization"]
     result = {"target": None, "repositories_with_callers": 0, "caller_count": 0,
-              "drift": [], "unavailable": []}
+              "drift": [], "errors": [], "unavailable": []}
     try:
         result["target"] = gh(f"repos/{organization}/.github/commits/master")["sha"]
+        target = shared_surface(organization, result["target"])
         repositories = [repository for repository in collection(f"orgs/{organization}/repos?type=all&per_page=100")
                         if not repository["fork"]]
     except (OSError, ValueError, KeyError, subprocess.SubprocessError) as error:
@@ -193,15 +215,31 @@ def pin_drift(settings):
             return repository["name"], [], type(error).__name__
 
     with ThreadPoolExecutor(max_workers=4) as executor:
-        for name, callers, error in executor.map(inspect, sorted(repositories, key=lambda item: item["name"])):
-            if error:
-                result["unavailable"].append({"repository": name, "reason": error})
-            if callers:
-                result["repositories_with_callers"] += 1
-                result["caller_count"] += len(callers)
-                outdated = [caller for caller in callers if caller["ref"] != result["target"]]
-                if outdated:
-                    result["drift"].append({"repository": name, "callers": outdated})
+        observations = list(executor.map(inspect, sorted(repositories, key=lambda item: item["name"])))
+    differences, errors = {result["target"]: []}, {}
+    refs = {caller["ref"] for _, callers, _ in observations for caller in callers}
+    for ref in sorted(refs - differences.keys()):
+        try:
+            surface = shared_surface(organization, ref)
+            differences[ref] = sorted(path for path in target.keys() | surface.keys()
+                                      if target.get(path) != surface.get(path))
+        except (OSError, ValueError, KeyError, subprocess.SubprocessError) as error:
+            errors[ref] = type(error).__name__
+    for name, callers, error in observations:
+        if error:
+            result["unavailable"].append({"repository": name, "reason": error})
+        if callers:
+            result["repositories_with_callers"] += 1
+            result["caller_count"] += len(callers)
+            outdated = []
+            for caller in callers:
+                ref = caller["ref"]
+                if ref in errors:
+                    result["errors"].append({"repository": name, **caller, "reason": errors[ref]})
+                elif differences[ref]:
+                    outdated.append({**caller, "files": differences[ref]})
+            if outdated:
+                result["drift"].append({"repository": name, "callers": outdated})
     return result
 
 
@@ -210,12 +248,17 @@ def pin_summary(report):
     if report["drift"]:
         lines += ["shared pin drift (report only):"]
         for repository in report["drift"]:
-            lines += ["- " + repository["repository"] + ": " + ", ".join(
-                caller["workflow"] + "@" + caller["ref"] for caller in repository["callers"])]
+            for caller in repository["callers"]:
+                lines += ["- " + repository["repository"] + ": " + caller["workflow"] + "@" + caller["ref"]
+                          + "; shared files differ: " + ", ".join(caller["files"])]
     else:
-        lines += ["shared pin drift: " + ("none observed" if report["unavailable"] else "none")
+        incomplete = report["unavailable"] or report["errors"]
+        lines += ["shared pin drift: " + ("none observed" if incomplete else "none")
                   + " (" + str(report["repositories_with_callers"])
                   + " repositories, " + str(report["caller_count"]) + " callers)"]
+    for item in report["errors"]:
+        lines += ["shared pin error: " + item["repository"] + ": " + item["workflow"] + "@" + item["ref"]
+                  + " (cannot read shared surface: " + item["reason"] + ")"]
     for item in report["unavailable"]:
         lines += ["shared pin observation unavailable: " + item["repository"] + " (" + item["reason"] + ")"]
     return "\n".join(lines)
