@@ -17,8 +17,11 @@ file in the same pull request.
 4. Merge only when every required check is green and every review thread is
    resolved: each automatic review finding is fixed or answered on the pull
    request.
-5. Squash-merge the reviewed head commit, for example
-   `gh pr merge <number> --squash --match-head-commit <sha>`.
+5. Squash-merge the reviewed head commit with an empty body, for example
+   `gh pr merge <number> --squash --match-head-commit <sha> --body ''`.
+   Without `--body ''`, `gh` sends GitHub's default body, which carries the
+   branch's commit messages and trailers, instead of the repository's blank
+   setting.
 
 External pull requests and bot-authored changes are welcome. Pull-request
 policy checks the title and added content. Default-branch push policy requires
