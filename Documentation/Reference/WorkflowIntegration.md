@@ -232,10 +232,15 @@ Adopt a reviewed full shared SHA in all policy, validation and release callers
 together after a pinned consumer run. Older releases keep their existing assets;
 the first release after adoption establishes the remote API baseline. The
 package template carries the same pin for new repositories.
-`Scripts/check-settings.py` reports caller pins that differ from the latest shared
-`master`, including the repository, workflow and observed ref. This observation
-is non-blocking because pin updates land through reviewed pull requests; missing
-API access is reported as unavailable and does not change settings validation.
+`Scripts/check-settings.py` compares each caller pin's reusable workflows and
+shared script sources with the latest shared `master` by Git blob identity and
+file mode. Workflow bytes include their generated inline scripts. The report
+lists the repository, caller workflow, observed ref and changed shared files;
+documentation-only changes leave identical pins current. `SHARED_SURFACE` in
+the checker declares the reusable files and script sources to compare and must
+cover each reusable workflow. Unknown or unreadable pins produce explicit
+errors. These observations are non-blocking because pin updates land through
+reviewed pull requests; settings validation remains independently enforced.
 
 ## Published icon validation
 

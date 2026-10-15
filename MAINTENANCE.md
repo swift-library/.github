@@ -133,10 +133,14 @@ No Actions secrets or variables exist at organization or repository level.
 above. The declaration owns exact API parameters; the table owns job names.
 Changes to either must accompany the corresponding GitHub setting change.
 The checker reads metadata only and never retrieves secret values.
-It also reports shared-workflow pins against the latest shared `master` commit
-for self-owned repositories. Pin drift and unavailable pin observations do not
-change its exit status: callers advance through reviewed pull requests, while
-the settings declaration remains enforced.
+It also compares the content of reusable workflows and their shared script
+sources at each caller pin with the latest shared `master` for self-owned
+repositories. Generated inline scripts are covered by the workflow files.
+Drift lists the shared files whose Git blob identities or file modes differ;
+documentation and settings-check changes do not require caller pin updates.
+Unknown or unreadable pins are reported as errors. Pin drift, pin errors and
+unavailable observations do not change its exit status: callers advance through
+reviewed pull requests, while the settings declaration remains enforced.
 
 ```json
 {
