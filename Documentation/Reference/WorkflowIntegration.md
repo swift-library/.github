@@ -213,10 +213,29 @@ scopes report `incomparable`. `equal` means equality of these observed snapshots
 not a compatibility guarantee. The release and promotion rules are owned by
 [VERSIONING.md](../../VERSIONING.md#public-interface-evidence).
 
+PR and branch validation can reuse a complete recollected baseline through an
+exact-key Actions cache. The key records the repository, release tag commit,
+verified attached-evidence digest, collector version/commit/archive digest,
+runner image/version/architecture, and Xcode, Swift and SDK identities. There
+are no fallback keys. A restored record must match every expected input, its
+content digest, release envelope and collector before use. An absent or rejected
+record is recollected from the verified release source. The cache is saved before
+candidate package code executes; incomplete evidence is never cached. The API
+report includes hit/miss/rejection status and baseline timing.
+
+Validation with a nonempty `ref`, release events and tag runs bypass this cache.
+Release callers pass their accepted tag through `ref`; release validation and
+publication never restore or save recollected-baseline caches. Candidate
+interfaces are collected fresh in every run.
+
 Adopt a reviewed full shared SHA in all policy, validation and release callers
 together after a pinned consumer run. Older releases keep their existing assets;
 the first release after adoption establishes the remote API baseline. The
 package template carries the same pin for new repositories.
+`Scripts/check-settings.py` reports caller pins that differ from the latest shared
+`master`, including the repository, workflow and observed ref. This observation
+is non-blocking because pin updates land through reviewed pull requests; missing
+API access is reported as unavailable and does not change settings validation.
 
 ## Published icon validation
 

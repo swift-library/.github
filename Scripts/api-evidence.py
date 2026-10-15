@@ -11,6 +11,7 @@ import re
 import shutil
 import subprocess
 import tarfile
+import time
 from urllib.error import HTTPError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
@@ -111,6 +112,7 @@ def baseline(api):
     commit = api.commit(release['tag_name'])
     value = validate(api.asset(assets[0]), api.repository, commit)
     return value, {**identity, 'commit': commit, 'asset_id': assets[0]['id'],
+                   'asset_digest': assets[0]['digest'],
                    'status': value['status'], 'source': 'release-asset', 'collector': value.get('collector')}
 
 
@@ -181,6 +183,49 @@ def collector_matches(value):
     )
 
 
+def content_digest(value):
+    return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+
+
+def baseline_cache_inputs(prior, identity):
+    if prior is None or collector_matches(prior):
+        return None
+    if not re.fullmatch(r'sha256:[0-9a-f]{64}', identity.get('asset_digest') or ''):
+        raise Unavailable('Baseline cache requires a verified release asset digest')
+    image = {name: os.environ[name] for name in ('ImageOS', 'ImageVersion', 'RUNNER_OS', 'RUNNER_ARCH')}
+    if not all(image.values()):
+        raise Unavailable('Baseline cache requires the complete runner image identity')
+    commands = {'xcode': ['xcodebuild', '-version'], 'swift': ['swift', '--version'],
+                'sdk': ['xcrun', '--sdk', 'macosx', '--show-sdk-version']}
+    toolchain = {name: subprocess.check_output(command, text=True).strip() for name, command in commands.items()}
+    return {'schema_version': 1, 'repository': prior['repository'], 'release_commit': identity['commit'],
+            'attached_evidence_digest': identity['asset_digest'], 'collector': TOOL,
+            'runner_image': image, 'toolchain': toolchain}
+
+
+def baseline_cache_key(inputs):
+    return 'api-release-baseline-v1-' + content_digest(inputs)
+
+
+def read_cached_baseline(path, inputs):
+    if path.is_symlink() or path.stat().st_size > LIMIT:
+        raise Unavailable('Baseline cache file has an invalid type or size')
+    record = json.loads(path.read_text())
+    if record.get('schema_version') != 1 or record.get('inputs') != inputs:
+        raise Unavailable('Baseline cache inputs differ from the verified release and toolchain')
+    value = validate(record['baseline'], inputs['repository'], inputs['release_commit'])
+    if record.get('baseline_sha256') != content_digest(value):
+        raise Unavailable('Baseline cache content digest differs from its receipt')
+    if value['status'] != 'complete' or not collector_matches(value):
+        raise Unavailable('Baseline cache must contain complete evidence from the pinned collector')
+    return value
+
+
+def recollection_identity(identity, prior, value):
+    return {**identity, 'source': 'recollected-release-tag', 'collector': TOOL,
+            'attached_collector': prior.get('collector'), 'status': value['status']}
+
+
 def recollect(prior, identity, executable, root, scratch, output):
     """Rebuild only the verified release commit, before executing candidate sources."""
     if prior is None or collector_matches(prior):
@@ -197,8 +242,81 @@ def recollect(prior, identity, executable, root, scratch, output):
     value = collect(executable, source, baseline_scratch, output, prior['repository'], identity['commit'])
     if not collector_matches(value):
         raise Unavailable('Recollected baseline does not match the pinned collector')
-    return value, {**identity, 'source': 'recollected-release-tag', 'collector': TOOL,
-                   'attached_collector': prior.get('collector'), 'status': value['status']}
+    return value, recollection_identity(identity, prior, value)
+
+
+def workflow_output(name, value):
+    if os.environ.get('GITHUB_OUTPUT'):
+        with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
+            print(name + '=' + value, file=stream)
+
+
+def prepare_baseline(root, repository, commit, cache_enabled=False):
+    scratch, output = root / '.build/shared-api', root / '.build/api-evidence'
+    scratch.mkdir(parents=True, exist_ok=True)
+    output.mkdir(parents=True, exist_ok=True)
+    (output / 'collection.log').write_bytes(b'')
+    started = time.monotonic()
+    try:
+        prior, identity = baseline(GitHub(repository))
+    except Exception as error:
+        prior, identity = None, {'status': 'unavailable', 'reason': type(error).__name__}
+    inputs = None
+    cache = {'status': 'disabled' if not cache_enabled else 'not-needed'}
+    if cache_enabled:
+        try:
+            inputs = baseline_cache_inputs(prior, identity)
+        except Exception as error:
+            cache = {'status': 'disabled', 'reason': type(error).__name__}
+    context = {'repository': repository, 'commit': commit, 'prior': prior, 'identity': identity,
+               'cache_inputs': inputs, 'cache': cache, 'prepare_seconds': time.monotonic() - started}
+    write(scratch / 'baseline-context.json', context)
+    workflow_output('cache_key', baseline_cache_key(inputs) if inputs else '')
+
+
+def baseline_context(root, repository, commit):
+    value = json.loads((root / '.build/shared-api/baseline-context.json').read_text())
+    if value['repository'] != repository or value['commit'] != commit:
+        raise Unavailable('Prepared baseline context belongs to another candidate')
+    return value
+
+
+def recollect_baseline(root, repository, commit, executable=None):
+    scratch, output = root / '.build/shared-api', root / '.build/api-evidence'
+    context = baseline_context(root, repository, commit)
+    prior, identity, inputs = context['prior'], context['identity'], context['cache_inputs']
+    cached = scratch / 'baseline-cache/record.json'
+    try:
+        executable = executable or tool(root, scratch, output / 'collection.log')
+        context['executable'] = str(executable)
+        started = time.monotonic()
+        value = None
+        if inputs:
+            context['cache'] = {'status': 'miss', 'key': baseline_cache_key(inputs)}
+            if cached.exists():
+                try:
+                    value = read_cached_baseline(cached, inputs)
+                    context['cache']['status'] = 'hit'
+                except Exception as error:
+                    context['cache'].update(status='rejected', reason=str(error) if isinstance(error, Unavailable)
+                                            else type(error).__name__)
+        if value is not None:
+            identity = recollection_identity(identity, prior, value)
+            prior = value
+        else:
+            prior, identity = recollect(prior, identity, executable, root, scratch, output)
+            if inputs and prior['status'] == 'complete':
+                validate(prior, repository, inputs['release_commit'])
+                write(cached, {'schema_version': 1, 'inputs': inputs, 'baseline': prior,
+                               'baseline_sha256': content_digest(prior)})
+                if context['cache']['status'] == 'miss':
+                    workflow_output('cache_ready', 'true')
+        context['cache']['seconds'] = time.monotonic() - started
+    except Exception as error:
+        prior, identity = None, {**identity, 'status': 'unavailable',
+                                'reason': str(error) if isinstance(error, Unavailable) else type(error).__name__}
+    context.update(prior=prior, identity=identity)
+    write(scratch / 'baseline-context.json', context)
 
 
 def compare(candidate, prior, identity, executable, root, scratch, log):
@@ -236,29 +354,44 @@ def summary(report):
                   + ') with collector ' + identity['collector']['version']]
     if identity.get('reason'):
         lines += ['- Baseline: ' + identity['reason']]
+    if report.get('baseline_cache'):
+        cache = report['baseline_cache']
+        lines += ['- Recollected baseline cache: ' + cache['status']]
+        if 'seconds' in cache:
+            lines += ['- Baseline selection/recollection: ' + format(cache['seconds'], '.3f') + ' seconds']
     if report.get('counts'):
         lines += ['- ' + key + ': ' + str(count) for key, count in report['counts'].items()]
     lines += ['', 'See api-evidence.json and api-report.json for source identity, scope, gaps and field-level changes.', '']
     return '\n'.join(lines)
 
 
-def report(root, repository, commit, executable=None):
+def report(root, repository, commit, executable=None, prepared=False):
     output, scratch = root / '.build/api-evidence', root / '.build/shared-api'
     output.mkdir(parents=True, exist_ok=True)
     scratch.mkdir(parents=True, exist_ok=True)
-    (output / 'collection.log').write_bytes(b'')
+    if not prepared:
+        (output / 'collection.log').write_bytes(b'')
     candidate = envelope(repository, commit)
     result = {'schema_version': 1, 'mode': 'report-only', 'repository': repository,
               'commit': commit, 'collection': 'failed', 'status': 'unavailable'}
     # Capture the remote baseline before executing the caller's package manifest.
+    context = None
     try:
-        prior, identity = baseline(GitHub(repository))
+        if prepared:
+            context = baseline_context(root, repository, commit)
+            prior, identity = context['prior'], context['identity']
+            executable = Path(context['executable']) if context.get('executable') else None
+        else:
+            prior, identity = baseline(GitHub(repository))
     except Exception as error:
         prior, identity = None, {'status': 'unavailable', 'reason': type(error).__name__}
     try:
+        if prepared and executable is None:
+            raise Unavailable('Collector was unavailable during baseline preparation')
         executable = executable or tool(root, scratch, output / 'collection.log')
         try:
-            prior, identity = recollect(prior, identity, executable, root, scratch, output)
+            if not prepared:
+                prior, identity = recollect(prior, identity, executable, root, scratch, output)
         except Exception as error:
             prior, identity = None, {**identity, 'status': 'unavailable',
                                     'reason': str(error) if isinstance(error, Unavailable) else type(error).__name__}
@@ -269,6 +402,9 @@ def report(root, repository, commit, executable=None):
                       reason=str(error) if isinstance(error, Unavailable) else type(error).__name__)
         if candidate['status'] == 'failed':
             candidate['reason'] = result['reason']
+    if context is not None:
+        result['baseline_cache'] = context['cache']
+        result['baseline_prepare_seconds'] = context['prepare_seconds']
     write(output / ASSET, candidate)
     write(output / 'api-report.json', result)
     markdown = summary(result)
@@ -290,9 +426,10 @@ def prepare(root, repository, commit):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('mode', choices=('collect', 'prepare-release'))
+    parser.add_argument('mode', choices=('collect', 'prepare-release', 'prepare-baseline', 'recollect-baseline'))
     parser.add_argument('--root', type=Path, default=Path.cwd())
     parser.add_argument('--executable', type=Path, help='Use an already built collector for local validation')
+    parser.add_argument('--prepared-baseline', action='store_true', help='Use the baseline prepared before candidate execution')
     args = parser.parse_args()
     root = args.root.resolve()
     repository = os.environ['GITHUB_REPOSITORY']
@@ -301,7 +438,11 @@ def main():
     if not re.fullmatch(r'[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', repository) or not re.fullmatch(r'[0-9a-f]{40}', commit):
         raise SystemExit('Expected a repository identity and a full source commit')
     if args.mode == 'collect':
-        report(root, repository, commit, args.executable.resolve() if args.executable else None)
+        report(root, repository, commit, args.executable.resolve() if args.executable else None, args.prepared_baseline)
+    elif args.mode == 'prepare-baseline':
+        prepare_baseline(root, repository, commit, os.environ.get('API_BASELINE_CACHE') == 'true')
+    elif args.mode == 'recollect-baseline':
+        recollect_baseline(root, repository, commit, args.executable.resolve() if args.executable else None)
     else:
         prepare(root, repository, commit)
 

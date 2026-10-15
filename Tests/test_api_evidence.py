@@ -2,6 +2,7 @@
 """Exercise baseline trust, reporting and release evidence identity."""
 
 import importlib.util
+from copy import deepcopy
 import json
 import os
 from pathlib import Path
@@ -43,7 +44,8 @@ class Release:
 
 def published(assets=None, **fields):
     return {'id': 1, 'tag_name': 'v0.1.0', 'draft': False, 'prerelease': False,
-            'assets': [{'name': api.ASSET, 'id': 2}] if assets is None else assets, **fields}
+            'assets': [{'name': api.ASSET, 'id': 2, 'digest': 'sha256:' + 'c' * 64}]
+            if assets is None else assets, **fields}
 
 
 class APIEvidenceTests(unittest.TestCase):
@@ -68,6 +70,7 @@ class APIEvidenceTests(unittest.TestCase):
         prior, identity = api.baseline(Release(published(), complete()))
         self.assertEqual(prior['commit'], identity['commit'])
         self.assertEqual(identity['tag'], 'v0.1.0')
+        self.assertEqual(identity['asset_digest'], 'sha256:' + 'c' * 64)
         for value in (complete(OTHER), {**complete(), 'repository': 'another/package'},
                       {**complete(), 'schema_version': 2}, {**complete(), 'evidence': None}):
             with self.subTest(value=value), self.assertRaises(api.Unavailable):
@@ -197,10 +200,155 @@ class APIEvidenceTests(unittest.TestCase):
         api.write(source, complete())
         api.prepare(self.root, REPOSITORY, COMMIT)
         self.assertEqual(json.loads(output.read_text()), complete())
+
         api.write(source, complete(OTHER))
         with self.assertRaises(api.Unavailable):
             api.prepare(self.root, REPOSITORY, COMMIT)
         self.assertEqual(json.loads(output.read_text()), complete())
+
+    def cache_context(self, enabled=True):
+        prior = complete()
+        prior['collector'] = {**api.TOOL, 'version': '0.1.2'}
+        identity = {'tag': 'v0.1.0', 'commit': COMMIT, 'asset_digest': 'sha256:' + 'c' * 64,
+                    'source': 'release-asset'}
+        inputs = {'schema_version': 1, 'repository': REPOSITORY, 'release_commit': COMMIT,
+                  'attached_evidence_digest': identity['asset_digest'], 'collector': api.TOOL,
+                  'runner_image': {'ImageOS': 'macos26', 'ImageVersion': 'image-1',
+                                   'RUNNER_OS': 'macOS', 'RUNNER_ARCH': 'ARM64'},
+                  'toolchain': {'xcode': 'Xcode build 1', 'swift': 'Swift build 1', 'sdk': '26.5'}}
+        with patch.object(api, 'baseline', return_value=(prior, identity)), \
+                patch.object(api, 'baseline_cache_inputs', return_value=inputs):
+            api.prepare_baseline(self.root, REPOSITORY, OTHER, enabled)
+        return prior, identity, inputs
+
+    def cached_record(self, inputs, value=None):
+        value = complete() if value is None else value
+        return {'schema_version': 1, 'inputs': inputs, 'baseline': value,
+                'baseline_sha256': api.content_digest(value)}
+
+    def test_cache_key_separates_release_evidence_collector_image_and_toolchain(self):
+        prior, identity, expected = self.cache_context()
+        image = expected['runner_image']
+        versions = {('xcodebuild', '-version'): 'Xcode build 1', ('swift', '--version'): 'Swift build 1',
+                    ('xcrun', '--sdk', 'macosx', '--show-sdk-version'): '26.5'}
+        def inputs(selected_identity=identity, selected_image=image, selected_versions=versions):
+            with patch.dict(os.environ, selected_image, clear=True), \
+                    patch.object(api.subprocess, 'check_output', side_effect=lambda command, **kwargs: selected_versions[tuple(command)]):
+                return api.baseline_cache_inputs(prior, selected_identity)
+        original = inputs()
+        self.assertEqual(original, expected)
+        key = api.baseline_cache_key(original)
+        for field in ['commit', 'asset_digest']:
+            changed = {**identity, field: OTHER if field == 'commit' else 'sha256:' + 'd' * 64}
+            self.assertNotEqual(api.baseline_cache_key(inputs(selected_identity=changed)), key)
+        for field in image:
+            self.assertNotEqual(api.baseline_cache_key(inputs(selected_image={**image, field: 'another'})), key)
+        for command in versions:
+            self.assertNotEqual(api.baseline_cache_key(inputs(selected_versions={**versions, command: 'another'})), key)
+        for field in ['version', 'commit', 'archive_sha256']:
+            with patch.object(api, 'TOOL', {**api.TOOL, field: 'another'}):
+                self.assertNotEqual(api.baseline_cache_key(inputs()), key)
+        with self.assertRaises(api.Unavailable):
+            inputs(selected_identity={**identity, 'asset_digest': None})
+
+    def test_verified_cache_hit_avoids_release_recollection(self):
+        prior, identity, inputs = self.cache_context()
+        path = self.root / '.build/shared-api/baseline-cache/record.json'
+        api.write(path, self.cached_record(inputs))
+        with patch.object(api, 'recollect') as recollect:
+            api.recollect_baseline(self.root, REPOSITORY, OTHER, Path('collector'))
+            recollect.assert_not_called()
+        context = api.baseline_context(self.root, REPOSITORY, OTHER)
+        self.assertEqual(context['prior'], complete())
+        self.assertEqual(context['identity']['attached_collector'], prior['collector'])
+        self.assertEqual(context['identity']['source'], 'recollected-release-tag')
+        self.assertEqual(context['cache']['status'], 'hit')
+        self.assertGreaterEqual(context['cache']['seconds'], 0)
+
+    def test_cache_rejects_changed_inputs_corruption_and_invalid_evidence(self):
+        for fault in ['inputs', 'digest', 'commit', 'collector', 'incomplete', 'schema', 'invalid-json']:
+            with self.subTest(fault=fault):
+                prior, identity, inputs = self.cache_context()
+                path = self.root / '.build/shared-api/baseline-cache/record.json'
+                record = deepcopy(self.cached_record(inputs))
+                if fault == 'inputs':
+                    record['inputs']['toolchain']['swift'] = 'another'
+                elif fault == 'digest':
+                    record['baseline_sha256'] = '0' * 64
+                elif fault == 'commit':
+                    record['baseline'] = complete(OTHER)
+                elif fault == 'collector':
+                    record['baseline']['collector']['archive_sha256'] = '0' * 64
+                elif fault == 'incomplete':
+                    record['baseline']['status'] = 'incomplete'
+                elif fault == 'schema':
+                    record['schema_version'] = 2
+                if fault in ('commit', 'collector', 'incomplete'):
+                    record['baseline_sha256'] = api.content_digest(record['baseline'])
+                api.write(path, record)
+                if fault == 'invalid-json':
+                    path.write_text('corrupt')
+                with patch.object(api, 'recollect', return_value=(complete(), identity)) as recollect:
+                    api.recollect_baseline(self.root, REPOSITORY, OTHER, Path('collector'))
+                    self.assertEqual(recollect.call_args.args[:2], (prior, identity))
+                self.assertEqual(api.baseline_context(self.root, REPOSITORY, OTHER)['cache']['status'], 'rejected')
+
+    def test_cache_miss_writes_only_complete_release_bound_evidence(self):
+        for status in ['complete', 'incomplete']:
+            with self.subTest(status=status):
+                prior, identity, inputs = self.cache_context()
+                path = self.root / '.build/shared-api/baseline-cache/record.json'
+                path.unlink(missing_ok=True)
+                value = {**complete(), 'status': status}
+                with patch.object(api, 'recollect', return_value=(value, identity)):
+                    api.recollect_baseline(self.root, REPOSITORY, OTHER, Path('collector'))
+                self.assertEqual(path.is_file(), status == 'complete')
+                if path.is_file():
+                    self.assertEqual(api.read_cached_baseline(path, inputs), value)
+
+    def test_release_validation_never_reads_or_writes_baseline_cache(self):
+        prior, identity, inputs = self.cache_context(enabled=False)
+        path = self.root / '.build/shared-api/baseline-cache/record.json'
+        api.write(path, {'untrusted': True})
+        original = path.read_bytes()
+        with patch.object(api, 'read_cached_baseline') as read, \
+                patch.object(api, 'recollect', return_value=(complete(), identity)) as recollect:
+            api.recollect_baseline(self.root, REPOSITORY, OTHER, Path('collector'))
+            read.assert_not_called()
+            recollect.assert_called_once()
+        self.assertEqual(path.read_bytes(), original)
+        self.assertEqual(api.baseline_context(self.root, REPOSITORY, OTHER)['cache']['status'], 'disabled')
+
+    def test_candidate_collection_uses_prepared_baseline_and_preserves_cache_receipt(self):
+        prior, identity, inputs = self.cache_context()
+        with patch.object(api, 'recollect', return_value=(complete(), identity)):
+            api.recollect_baseline(self.root, REPOSITORY, OTHER, Path('collector'))
+        with patch.object(api, 'baseline') as baseline, patch.object(api, 'recollect') as recollect, \
+                patch.object(api, 'collect', return_value=complete(OTHER)) as collect, \
+                patch.object(api, 'compare', return_value={'status': 'equal', 'collection': 'complete'}):
+            api.report(self.root, REPOSITORY, OTHER, prepared=True)
+            baseline.assert_not_called()
+            recollect.assert_not_called()
+            self.assertEqual(collect.call_args.args[-1], OTHER)
+        report = json.loads((self.root / '.build/api-evidence/api-report.json').read_text())
+        self.assertEqual(report['baseline_cache']['status'], 'miss')
+        with self.assertRaises(api.Unavailable):
+            api.baseline_context(self.root, REPOSITORY, COMMIT)
+
+    def test_workflow_saves_release_baseline_before_executing_candidate(self):
+        spec = importlib.util.spec_from_file_location('sync_api', ROOT / 'Scripts/sync-api-workflows.py')
+        sync = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(sync)
+        job = sync.job()
+        steps = ['      - name: Verify release baseline inputs',
+                 '      - name: Restore recollected release baseline',
+                 '      - name: Verify or recollect release baseline',
+                 '      - name: Cache verified release baseline',
+                 '      - name: Collect and compare public interfaces']
+        self.assertEqual([job.index(step) for step in steps], sorted(job.index(step) for step in steps))
+        self.assertIn("inputs.ref == '' && github.event_name != 'release' && !startsWith(github.ref, 'refs/tags/')", job)
+        self.assertNotIn('restore-keys:', job)
+        self.assertNotIn('uses: actions/cache', sync.publication())
 
 
 if __name__ == '__main__':
