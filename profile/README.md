@@ -66,7 +66,7 @@
 
 <table>
 <tbody>
-<tr><td><a href="https://github.com/swift-library/skills"><img src="https://raw.githubusercontent.com/swift-library/skills/HEAD/Documentation/Assets/Logo.svg" width="40" alt="skills logo"></a></td><td><strong><a href="https://github.com/swift-library/skills">skills</a></strong><br>Agent skills for Swift packages and Apple platforms, installable individually.</td></tr>
+<tr><td><a href="https://github.com/swift-library/skills"><img src="https://raw.githubusercontent.com/swift-library/skills/HEAD/Documentation/Assets/Logo.svg" width="40" alt="skills logo"></a></td><td><strong><a href="https://github.com/swift-library/skills">skills</a></strong><br>Build and maintain Swift packages and Apple apps with agent skills in a single plugin.</td></tr>
 </tbody>
 </table>
 
