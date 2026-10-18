@@ -24,7 +24,9 @@ file in the same pull request.
    setting.
 
 External pull requests and bot-authored changes are welcome. Pull-request
-policy checks the title and added content. Default-branch push policy requires
+policy checks the title, added content and added or modified file paths, as
+defined in [Source policy](Documentation/Reference/WorkflowIntegration.md#source-policy).
+Default-branch push policy requires
 GitHub-verified commits committed by GitHub or the owner; it does not restrict
 the original author. Dependabot, updater Apps and GitHub Actions may author
 changes. Product names are allowed only through the caller's `allow-terms`.

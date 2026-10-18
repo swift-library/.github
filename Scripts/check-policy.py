@@ -15,8 +15,7 @@ ZERO_SHA = "0" * 40
 TRAILER = re.compile(
     r"^(Co-authored-by|Made-with|Generated-by|Generated-with|Assisted-by|Signed-off-by):"
     r"|Generated with|cursor\.com|anthropic\.com|claude\.ai|openai\.com", re.I | re.M)
-PRIVATE_PATH = re.compile(r"/(?:Users|home)/[^/\s]+/|\.(?:agent|workspace)/")
-PLAN = re.compile(r"(?:\b[^\s/]+\.plan\.md\b|\bPLANS\.md\b)", re.I)
+PRIVATE_PATH = re.compile(r"/(?:Users|home)/[^/\s]+/|[.]workspace/")
 AGENT = re.compile(r"\b(ChatGPT|Codex|Cursor|Claude)\b", re.I)
 
 
@@ -54,8 +53,6 @@ def content_findings(path, number, text, allow_terms):
         reasons.append("attribution trailer or tool attribution")
     if PRIVATE_PATH.search(text):
         reasons.append("private execution path")
-    if PLAN.search(text):
-        reasons.append("private plan file")
     terms = sorted({match.group() for match in AGENT.finditer(text)
                     if match.group().lower() not in allow_terms})
     if terms:
@@ -103,8 +100,12 @@ def check_range(repository, base, head, allow_terms, *, verify_commits=False, fe
         comparison = git("hash-object", "-t", "tree", "--stdin").strip()
     else:
         comparison = git("merge-base", base, head).strip()
-    paths = git("diff", "--name-only", "--no-renames", "-z", comparison, head).split("\0")
+    paths = git("diff", "--name-only", "--no-renames", "--diff-filter=d", "-z", comparison, head).split("\0")
     for path in filter(None, paths):
+        file = Path(path)
+        if (any(part in {".agent", ".workspace"} for part in file.parts)
+                or file.name == "PLANS.md" or file.name.endswith(".plan.md")):
+            findings.append(f"{path}: private execution file")
         # Git can emit byte fixtures as text when they contain no NUL. Keep
         # scanning their readable content without requiring valid UTF-8.
         patch = git("diff", "--no-ext-diff", "--no-color", "--no-renames", "--unified=0",
