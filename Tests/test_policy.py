@@ -41,8 +41,11 @@ class PolicyTests(unittest.TestCase):
         self.assertTrue(policy.content_findings("a", 3, "Co-authored-by: helper", set()))
         workstation = "/" + "Users/fixture/project"
         self.assertTrue(policy.content_findings("a", 3, workstation, set()))
+        self.assertTrue(policy.content_findings("a", 3, "/" + "home/fixture/project", set()))
         self.assertTrue(policy.content_findings("a", 3, "." + "workspace/cache", set()))
-        self.assertTrue(policy.content_findings("a", 3, "example." + "plan.md", set()))
+        for text in (".agent/plans/x.md", ".agent/PLANS.md", "PLANS.md", "release.plan.md"):
+            with self.subTest(text=text):
+                self.assertEqual(policy.content_findings("a", 3, text, set()), [])
         self.assertTrue(policy.content_findings("a", 3, "Codex", set()))
         self.assertEqual(policy.content_findings("a", 3, "Codex API", {"codex"}), [])
         self.assertTrue(policy.content_findings("a", 3, workstation + " Codex", {"codex"}))
@@ -83,6 +86,92 @@ class PolicyTests(unittest.TestCase):
                 unsafe_fixture = commit(b"invalid UTF-8: \xfa\n/" + b"home/fixture/private\n")
                 self.assertEqual(policy.check_range("example/repo", byte_fixture, unsafe_fixture, set(), verify_commits=True, fetch_commit=lambda *_: record()),
                                  ["sample.txt:2: private execution path"])
+            finally:
+                os.chdir(previous)
+
+    def test_real_git_private_file_paths(self):
+        output = ROOT / ".build/policy-tests"
+        output.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=output) as directory:
+            previous = Path.cwd()
+            os.chdir(directory)
+            try:
+                subprocess.run(["git", "init", "-q"], check=True)
+                def commit():
+                    policy.git("add", "--all", "--force")
+                    policy.git("-c", "user.name=Fixture", "-c", "user.email=fixture@example.test",
+                               "-c", "commit.gpgsign=false", "-c", "core.hooksPath=/dev/null", "commit", "-qm", "fix: fixture")
+                    return policy.git("rev-parse", "HEAD").strip()
+                # Plan basenames and suffixes are matched case-sensitively.
+                public_paths = ("sample.txt", ".agent-notes/x.md", ".workspace-notes/x.md",
+                                "docs/PLANS.md.example", "release.plan.md/guide.md", "plans.md", "docs/Release.PLAN.md")
+                for name in public_paths:
+                    path = Path(name)
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_text("Document .agent/plans/x.md, .agent/PLANS.md and release.plan.md.\n")
+                base = commit()
+                self.assertEqual(policy.check_range("example/repo", policy.ZERO_SHA, base, set()), [])
+                private_paths = (".agent/plans/x.md", ".agent/plans/draft notes.md", "docs/PLANS.md", "x.plan.md",
+                                 "." + "workspace/state.json", "docs/.agent/x.md", "docs/." + "workspace/state.json")
+                expected = sorted(f"{name}: private execution file" for name in private_paths)
+                for name in private_paths:
+                    path = Path(name)
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_text("initial\n")
+                added = commit()
+                self.assertEqual(sorted(policy.check_range("example/repo", base, added, set())), expected)
+                self.assertEqual(sorted(policy.check_range("example/repo", policy.ZERO_SHA, added, set())), expected)
+                self.assertEqual(sorted(policy.check_range("example/repo", base, added, set(),
+                    verify_commits=True, fetch_commit=lambda *_: record())), expected)
+                self.assertEqual(sorted(policy.check_range("example/repo", base, added, set(),
+                    verify_commits=True, fetch_commit=lambda *_: record(False))),
+                    sorted([*expected, f"{added}: commit is not Verified by GitHub"]))
+                for name in private_paths:
+                    Path(name).write_text("modified\n")
+                modified = commit()
+                self.assertEqual(sorted(policy.check_range("example/repo", added, modified, set())), expected)
+                self.assertEqual(sorted(policy.check_range("example/repo", added, modified, set(),
+                    verify_commits=True, fetch_commit=lambda *_: record())), expected)
+                Path("sample.txt").write_text("updated documentation\n")
+                unchanged = commit()
+                self.assertEqual(policy.check_range("example/repo", modified, unchanged, set()), [])
+                for name in private_paths:
+                    Path(name).unlink()
+                deleted = commit()
+                self.assertEqual(policy.check_range("example/repo", unchanged, deleted, set()), [])
+                self.assertEqual(policy.check_range("example/repo", unchanged, deleted, set(),
+                    verify_commits=True, fetch_commit=lambda *_: record()), [])
+            finally:
+                os.chdir(previous)
+
+    def test_real_git_renames_and_standalone_agent_file(self):
+        output = ROOT / ".build/policy-tests"
+        output.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=output) as directory:
+            previous = Path.cwd()
+            os.chdir(directory)
+            try:
+                subprocess.run(["git", "init", "-q"], check=True)
+                def commit():
+                    policy.git("add", "--all", "--force")
+                    policy.git("-c", "user.name=Fixture", "-c", "user.email=fixture@example.test",
+                               "-c", "commit.gpgsign=false", "-c", "core.hooksPath=/dev/null", "commit", "-qm", "fix: fixture")
+                    return policy.git("rev-parse", "HEAD").strip()
+                Path("sample.txt").write_text("clean\n")
+                base = commit()
+                Path(".agent").mkdir()
+                Path("sample.txt").rename(".agent/sample.txt")
+                moved_in = commit()
+                self.assertEqual(policy.check_range("example/repo", base, moved_in, set()),
+                                 [".agent/sample.txt: private execution file"])
+                Path(".agent/sample.txt").rename("sample.txt")
+                moved_out = commit()
+                self.assertEqual(policy.check_range("example/repo", moved_in, moved_out, set()), [])
+                Path(".agent").rmdir()
+                Path("sample.txt").rename(".agent")
+                standalone = commit()
+                self.assertEqual(policy.check_range("example/repo", moved_out, standalone, set()),
+                                 [".agent: private execution file"])
             finally:
                 os.chdir(previous)
 

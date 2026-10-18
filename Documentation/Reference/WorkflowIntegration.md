@@ -104,17 +104,23 @@ default-branch site builds publish through a separate non-cancelling workflow.
 
 The required check is `policy / policy`. Pull requests check the title for
 Conventional Commit syntax, attribution and unapproved terms, then scan only
-added lines. Contributor identities and signatures do not block pull requests.
+added lines for attribution, unapproved product terms, absolute personal paths
+and paths into the local-only `.workspace` directory. Mentions of `.agent/`,
+`PLANS.md` and `*.plan.md` are allowed in text. Changed file paths are checked
+separately: added or modified files are rejected when any path segment is
+`.agent` or `.workspace`, or the basename is `PLANS.md` or ends with `.plan.md`.
+Deleting those files is allowed. Contributor identities and signatures do not
+block pull requests.
 Default-branch pushes require every new commit to be GitHub-verified with the
 owner or GitHub as committer; external and bot authors are accepted. An initial
 push checks the complete initial history. The embedded shared version validator
 runs when `.github/release.json` exists.
 
 The `allow-terms` input lists identifiers and product names required by the
-repository, one per line. It does not exempt attribution, private paths or plan
-files. Keep the list limited to the repository's actual public surface. Shared
-policy sources and their tests name all supported tools, so this repository
-declares those names in its own caller.
+repository, one per line. It does not exempt attribution, absolute personal paths,
+local-only directory paths or private execution files. Keep the list limited to
+the repository's actual public surface. Shared policy sources and their tests
+name all supported tools, so this repository declares those names in its own caller.
 
 `Scripts/check-policy.py` owns the policy implementation. Run
 `python3 Scripts/sync-policy-workflow.py` after editing it. The generated
