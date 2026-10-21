@@ -1,9 +1,10 @@
 # Versioning and Release
 
 This is the release standard for every swift-library repository. Each package's
-own release policy records its version source, compatibility surface and tested
-environments; the rules below are shared. Repository scope and default branches
-follow [Maintenance](MAINTENANCE.md#repository-scope).
+release reference, `Documentation/Reference/Release.md`, records its version
+source, compatibility surface, tested environments and release entry points;
+the rules below are shared. Repository scope and default branches follow
+[Maintenance](MAINTENANCE.md#repository-scope).
 
 ## Tags
 
@@ -13,13 +14,51 @@ follow [Maintenance](MAINTENANCE.md#repository-scope).
   `-beta.N` or `-rc.N`, with N starting at 1.
 - Tags are signed annotated tags with the message `<repository> X.Y.Z`.
 
+## When to release
+
+Where a delivery workflow governs the project, it decides when to release;
+otherwise:
+
+Release once a change is complete: everything it needs, including
+documentation, is merged and verified. A change that spans several pull
+requests or repositories releases once, when all of it has landed, or at
+milestones its owner names before the work starts. Its intermediate steps,
+review fixes, documentation fixes and pin updates do not release on their own.
+
+While a change is in progress, other repositories reference its commits by full
+SHA without a version comment. Once it is released, consumers pin the tagged
+commit with a `# vX.Y.Z` comment, which lets Dependabot propose later releases.
+
 ## Choosing the next version
 
-| Released change | During 0.x | From 1.0.0 |
-| --- | --- | --- |
-| Compatible fix, performance work or documentation correction | PATCH | PATCH |
-| Compatible addition | PATCH | MINOR |
-| Breaking change | MINOR | MAJOR |
+### 0.x (initial development)
+
+Anything may change at any time, without deprecation windows or a release
+cadence. Breaking changes bump MINOR; everything else bumps PATCH.
+
+### 1.0.0
+
+Release `1.0.0` when the owner decides the interface is stable and
+compatibility is promised.
+
+### 1.0 and later
+
+Change an interface by adding the new form compatibly, keeping the old form
+working and deprecating it. Remove the old form only in a planned major.
+
+Breaking changes appear only in planned majors, on a roughly yearly cadence
+like platform releases. A major may also mark a significant feature release.
+Never cut a major because of a single change.
+
+New features, including value or output changes consumers absorb without
+changing their usage, bump MINOR. Fixes, performance work and documentation
+corrections bump PATCH.
+
+Reset less significant components to zero when bumping MAJOR or MINOR.
+Version numbers never tagged or published to users do not constrain the first
+release, which may start at `0.1.0`.
+
+### Breaking changes
 
 A breaking change is anything that can stop a consumer from building or change
 behavior it relies on:
@@ -32,10 +71,9 @@ behavior it relies on:
 - removing a product or a trait;
 - moving a dependency to a range that cannot resolve alongside the previous one.
 
-Reset the lower components when MINOR or MAJOR increases. The products of one
-repository share its version. CI, formatting, repository hygiene and
-documentation changes don't need a release, unless the published documentation
-is wrong.
+The products of one repository share its version. CI, formatting, repository
+hygiene and documentation changes don't need a release, unless the published
+documentation is wrong.
 
 ## One version source
 
@@ -43,18 +81,22 @@ Each repository has exactly one declaration of its version:
 
 - libraries use a `VERSION` file at the repository root;
 - executables use the source file that `--version` prints.
+- plugin collections use `metadata.version` in `.claude-plugin/marketplace.json`,
+  mirrored by their `plugin.json` files.
 
-`.github/release.json` names that declaration with `version_file` and
-`version_pattern`. The shared version validator reads that declaration and
-checks it against the changelog and, during publication, the signed tag.
-Checks fail on drift and never rewrite version inputs. Packages use the
-validator embedded in the shared workflows.
+Swift packages name that declaration in `.github/release.json` with
+`version_file` and `version_pattern`. The shared version validator reads that
+declaration and checks it against the changelog and, during publication, the
+signed tag. Checks fail on drift and never rewrite version inputs. Packages use
+the validator embedded in the shared workflows.
 
 ## Changelog
 
 `CHANGELOG.md` starts with `## Unreleased`, followed by one `## X.Y.Z` section
 per release, newest first. A version's section is its release notes: it
 describes shipped behavior, and for a breaking change, how to upgrade.
+From `1.0` onward, record deprecations in the changelog and list a planned
+major's removals beforehand.
 
 ## Release procedure
 
@@ -94,7 +136,7 @@ its own pin in the same change; for example, swift-userdefault pins swift-gyb.
   `.github/release.json` equals `swift-tools-version` in `Package.swift` and
   the oldest compiler tested by its `ci` matrix. The shared validator checks
   these declarations; the minimum compiler must have a CI entry.
-- Raising any floor or minimum is a breaking change in the table above.
+- Raising any floor or minimum is a breaking change.
   Existing releases keep their original requirements.
 
 ## License
@@ -151,8 +193,8 @@ latest published stable release. It verifies the asset digest and binds the
 baseline to that release's tag commit. A pull request cannot select or rewrite
 the baseline in its source tree. Drafts and pre-releases are excluded from
 baseline selection; a pre-release candidate is still compared with the latest
-stable release. The same rule applies during 0.x. Version choices continue to
-follow the table above.
+stable release. The same rule applies during 0.x. Version choices follow
+[Choosing the next version](#choosing-the-next-version).
 
 Comparisons use one pinned collector version for both inputs. When the verified
 release asset used a different collector, the shared job checks out that release's
