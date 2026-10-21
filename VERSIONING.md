@@ -128,6 +128,8 @@ its own pin in the same change; for example, swift-userdefault pins swift-gyb.
 
 ## Platforms and toolchains
 
+These rules apply to Swift packages.
+
 - Deployment floors use the current Xcode minimums: iOS 15, macOS 12, tvOS 15,
   watchOS 9 and visionOS 1. A package declares higher floors when it needs
   newer APIs.
@@ -168,23 +170,24 @@ and test data keep their own notices.
 ## Acceptance and evidence
 
 A candidate is accepted from a clean committed tree with a consistent version
-and changelog, a reviewed dependency lock, passing builds and tests on the
-declared compilers and platforms, and a consumer that resolves it from the
-remote.
+and changelog and passing repository checks. Swift packages also need a
+reviewed dependency lock, passing builds and tests on the declared compilers
+and platforms, and a consumer that resolves the candidate from the remote.
+Other repositories name their checks and evidence in their release reference.
 
-CI records the commit and tree, dependency lock digest, toolchain, OS, SDK and
-validation logs. That evidence is kept as build artifacts and attached to the
-release; public attachments contain no workstation paths or user names. A
-changed source revision, dependency lock, configuration or checker needs fresh
-validation.
+For Swift packages, CI records the commit and tree, dependency lock digest,
+toolchain, OS, SDK and validation logs. That evidence is kept as build
+artifacts and attached to the release. Public attachments contain no
+workstation paths or user names. A changed source revision, dependency lock,
+configuration or checker needs fresh validation.
 
-Validation jobs use read-only repository permissions. Publication is a separate
-job with scoped contents write permission. Callers pin the shared workflows by
-full commit SHA.
+The shared Swift package workflows run validation with read-only repository
+permissions and publication as a separate job with scoped contents write
+permission. Callers pin the shared workflows by full commit SHA.
 
 ## Public interface evidence
 
-Each release attaches `api-evidence.json`: a versioned envelope binding the
+Each Swift package release attaches `api-evidence.json`: a versioned envelope binding the
 repository and signed tag commit to the collector pin, collection status and
 compiler-reported snapshot. The snapshot records its actual toolchain, SDK,
 target, scope and gaps. A failed collection records that failure; it does not
