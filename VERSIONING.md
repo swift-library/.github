@@ -79,10 +79,8 @@ documentation is wrong.
 
 Each repository has exactly one declaration of its version:
 
-- libraries use a `VERSION` file at the repository root;
+- libraries and plugin collections use a `VERSION` file at the repository root;
 - executables use the source file that `--version` prints.
-- plugin collections use `metadata.version` in `.claude-plugin/marketplace.json`,
-  mirrored by their `plugin.json` files.
 
 Swift packages name that declaration in `.github/release.json` with
 `version_file` and `version_pattern`. The shared version validator reads that
