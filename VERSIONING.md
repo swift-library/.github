@@ -25,9 +25,11 @@ requests or repositories releases once, when all of it has landed, or at
 milestones its owner names before the work starts. Its intermediate steps,
 review fixes, documentation fixes and pin updates do not release on their own.
 
-While a change is in progress, other repositories reference its commits by full
-SHA without a version comment. Once it is released, consumers pin the tagged
-commit with a `# vX.Y.Z` comment, which lets Dependabot propose later releases.
+While a change is in progress, workflow references between repositories pin its
+commits by full SHA without a version comment; once it is released, they pin the
+tagged commit with a `# vX.Y.Z` comment, which lets Dependabot propose later
+releases. Swift package dependencies follow
+[Consumers and pins](#consumers-and-pins).
 
 ## Choosing the next version
 
@@ -82,6 +84,9 @@ Each repository has exactly one declaration of its version:
 - libraries and plugin collections use a `VERSION` file at the repository root;
 - executables use the source file that `--version` prints.
 
+A plugin collection's manifest versions and its marketplace `metadata.version`
+mirror `VERSION` and must equal it.
+
 Swift packages name that declaration in `.github/release.json` with
 `version_file` and `version_pattern`. The shared version validator reads that
 declaration and checks it against the changelog and, during publication, the
@@ -98,21 +103,22 @@ major's removals beforehand.
 
 ## Release procedure
 
-1. On a branch based on `master`, update the version source, move the
-   unreleased entries under `## X.Y.Z`, and update the README dependency
-   snippet to `.upToNextMinor(from: "X.Y.Z")`.
+1. On a branch based on `master`, update the version source and its mirrors and
+   move the unreleased entries under `## X.Y.Z`. Swift packages also update the
+   README dependency snippet to `.upToNextMinor(from: "X.Y.Z")`.
 2. Open a Conventional Commit-titled pull request. After required checks pass
    and review threads are resolved, squash-merge its exact reviewed head as
    described in [Maintenance](MAINTENANCE.md#change-flow).
 3. Check out the accepted merge commit and create its signed annotated tag:
    `git tag -s vX.Y.Z -m "<repository> X.Y.Z"`. Push it with
    `git push origin vX.Y.Z`.
-4. Run the repository's `Release` workflow with that tag. It validates the
-   tagged commit through the shared `swift-package-ci.yml`, then the shared
-   `swift-package-release.yml` runs its embedded validator with
+4. Swift packages run the repository's `Release` workflow with that tag. It
+   validates the tagged commit through the shared `swift-package-ci.yml`, then
+   the shared `swift-package-release.yml` runs its embedded validator with
    `--tag vX.Y.Z --require-clean`, attaches the
    validation evidence and `api-evidence.json`, then publishes the GitHub release.
-5. Resolve the new tag from a fresh consumer package.
+   Other repositories publish as their release reference describes.
+5. Swift packages resolve the new tag from a fresh consumer package.
 
 ## Consumers and pins
 
