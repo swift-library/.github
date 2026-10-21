@@ -25,12 +25,6 @@ requests or repositories releases once, when all of it has landed, or at
 milestones its owner names before the work starts. Its intermediate steps,
 review fixes, documentation fixes and pin updates do not release on their own.
 
-While a change is in progress, workflow references between repositories pin its
-commits by full SHA without a version comment; once it is released, they pin the
-tagged commit with a `# vX.Y.Z` comment, which lets Dependabot propose later
-releases. Swift package dependencies follow
-[Consumers and pins](#consumers-and-pins).
-
 ## Choosing the next version
 
 ### 0.x (initial development)
