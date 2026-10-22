@@ -85,8 +85,7 @@ template is not versioned: create from its default branch.
 | --- | --- |
 | `swift-library/swift-package-template` | the new repository, `owner/name` |
 | `swift-package-template` | the package name |
-| `swift-package-target` | the library target name |
-| `swift_package_target` | the target's module name |
+| `SwiftPackageTarget` | the library target name, also its module, directories and type-name prefix |
 | `<#year#>` | the current year |
 | `<#copyright-holder#>` | the copyright holder |
 
