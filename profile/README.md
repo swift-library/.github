@@ -8,7 +8,7 @@
 <h1 align="center">Swift packages for apps, developer tools, and AI agents.</h1>
 
 <p align="center">
-  Each one is versioned on its own and tested on the Swift versions and platforms it supports.
+  Each package is versioned on its own and tested on the Swift versions and platforms it supports.
 </p>
 
 <p align="center">
@@ -28,7 +28,7 @@
 <tr><td><a href="https://github.com/swift-library/swift-semver"><img src="https://raw.githubusercontent.com/swift-library/swift-semver/HEAD/Documentation/Assets/Logo.svg" width="40" alt="swift-semver logo"></a></td><td><strong><a href="https://github.com/swift-library/swift-semver">swift-semver</a></strong><br>Parse, compare, constrain, and increment SemVer 2.0.0 versions using only the Swift standard library.</td></tr>
 <tr><td><a href="https://github.com/swift-library/swift-benchmark"><img src="https://raw.githubusercontent.com/swift-library/swift-benchmark/HEAD/Documentation/Assets/Logo.svg" width="40" alt="swift-benchmark logo"></a></td><td><strong><a href="https://github.com/swift-library/swift-benchmark">swift-benchmark</a></strong><br>Catch performance regressions beside your tests with JSON baselines and metric budgets.</td></tr>
 <tr><td><a href="https://github.com/swift-library/swift-gyb"><img src="https://raw.githubusercontent.com/swift-library/swift-gyb/HEAD/Documentation/Assets/Logo.svg" width="40" alt="swift-gyb logo"></a></td><td><strong><a href="https://github.com/swift-library/swift-gyb">swift-gyb</a></strong><br>Generate Swift sources and resource files from Python templates during SwiftPM builds.</td></tr>
-<tr><td><a href="https://github.com/swift-library/swift-package-template"><img src="https://raw.githubusercontent.com/swift-library/swift-package-template/HEAD/Documentation/Assets/Logo.svg" width="40" alt="swift-package-template logo"></a></td><td><strong><a href="https://github.com/swift-library/swift-package-template">swift-package-template</a></strong><br>Start a named Swift package with one command and shared CI and release checks.</td></tr>
+<tr><td><a href="https://github.com/swift-library/swift-package-template"><img src="https://raw.githubusercontent.com/swift-library/swift-package-template/HEAD/Documentation/Assets/Logo.svg" width="40" alt="swift-package-template logo"></a></td><td><strong><a href="https://github.com/swift-library/swift-package-template">swift-package-template</a></strong><br>A complete Swift package to create new swift-library packages from, with shared CI and release checks.</td></tr>
 </tbody>
 </table>
 

@@ -1,8 +1,10 @@
 # Contributing
 
-External contributions are welcome. Open an issue in the affected repository
-for a bug or proposed behavior, then keep the pull request focused on that
-change. Read the repository's README, agent guide and documented checks first.
+External contributions are welcome. Report a bug or propose a behavior change in
+an issue in the affected repository when you want the maintainers to act on
+it. A pull request that makes the change itself describes it and needs no
+separate issue; keep it focused on that change. Read the repository's README,
+agent guide and documented checks first.
 
 Commit subjects and pull-request titles follow Conventional Commits:
 `type(scope)!: subject`, with optional scope and breaking-change marker. Use

@@ -68,9 +68,29 @@ SDK and completed check evidence to the same directory. Run
 `python3 Scripts/sync-policy-workflow.py` after changing the shared validator.
 
 Review shared changes in their owning repository, validate workflow syntax, and
-exercise them through a consumer before upgrading another caller's pin. Generated
-packages use the template's stamping command to set their repository identity,
-module name and copyright owner before their first validation or publication.
+exercise them through a consumer before upgrading another caller's pin. New
+packages replace the template's identity values, listed in
+[New packages](#new-packages), before their first validation or publication.
+
+## New packages
+
+Create a new package repository from
+[swift-package-template](https://github.com/swift-library/swift-package-template).
+It is a complete package that carries its own name. Its documentation is
+swiftpm-docs' minimal export. After creating the repository, replace these
+values in file contents and paths, and remove the template-only paths. The
+template is not versioned: create from its default branch.
+
+| Template value | Replace with |
+| --- | --- |
+| `swift-library/swift-package-template` | the new repository, `owner/name` |
+| `swift-package-template` | the package name |
+| `SwiftPackageTarget` | the library target name, also its module, directories and type-name prefix |
+| `<#year#>` | the current year |
+| `<#copyright-holder#>` | the copyright holder |
+
+Template-only path: `Documentation/Assets/`, the template's own logo, which
+the organization profile shows.
 
 ## Source policy
 

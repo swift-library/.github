@@ -1,7 +1,9 @@
 # Versioning and Release
 
-This is the release standard for every swift-library repository. Each package's
-release reference, `Documentation/Reference/Release.md`, records its version
+This is the release standard for every swift-library repository except
+swift-package-template, which is not versioned; new packages are created from
+its default branch. Each package's release reference,
+`Documentation/Reference/Release.md`, records its version
 source, compatibility surface, tested environments and release entry points;
 the rules below are shared. Repository scope and default branches follow
 [Maintenance](MAINTENANCE.md#repository-scope).

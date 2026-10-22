@@ -2,7 +2,7 @@
   "organization": "swift-library",
   "promise": {
     "heading": "Swift packages for apps, developer tools, and AI agents.",
-    "secondary": "Each one is versioned on its own and tested on the Swift versions and platforms it supports.",
+    "secondary": "Each package is versioned on its own and tested on the Swift versions and platforms it supports.",
     "description": "Swift packages for apps, developer tools, and AI agents."
   },
   "navigation": {
@@ -31,7 +31,7 @@
         },
         {
           "name": "swift-package-template",
-          "summary": "Start a named Swift package with one command and shared CI and release checks."
+          "summary": "A complete Swift package to create new swift-library packages from, with shared CI and release checks."
         }
       ]
     },
