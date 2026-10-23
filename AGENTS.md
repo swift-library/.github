@@ -58,13 +58,13 @@ configuration. Render presentation assets locally with the
 ## Authority
 
 VERSIONING.md owns current shared release policy. Each caller repository
-owns its source, package graph, version declaration and release evidence.
+owns its source, package graph, version declaration and changelog.
 
 ## Boundary Guardrails
 
 Derive repository, version, toolchain and platform values from caller inputs or
-package-owned configuration. Keep run evidence in build outputs and release
-records. Preserve existing source ownership and historical records.
+package-owned configuration. Keep run outputs in ignored build directories.
+Preserve existing source ownership and historical records.
 
 ## Validation
 

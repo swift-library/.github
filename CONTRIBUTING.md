@@ -29,8 +29,8 @@ title becomes the merge subject and its body is empty. Maintainers follow the
 [signing setup](https://github.com/swift-library/.github/blob/master/MAINTENANCE.md#signing).
 External contributors retain their own author identity.
 
-Each package owns its source, version, compatibility surface and release
-evidence. Follow the shared
+Each package owns its source, version, compatibility surface and changelog.
+Follow the shared
 [versioning standard](https://github.com/swift-library/.github/blob/master/VERSIONING.md)
 for changes to those contracts.
 

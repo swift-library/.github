@@ -165,7 +165,7 @@ and test data keep their own notices.
 - An interrupted publication is retried with the same tag. An existing release
   is checked, never overwritten.
 
-## Acceptance and evidence
+## Acceptance
 
 Acceptance is a signed annotated tag on a commit whose shared validation passed,
 with a consistent version declaration and changelog entry. The tag identifies
@@ -176,7 +176,7 @@ The shared Swift package workflows run validation with read-only repository
 permissions and publication as a separate job with scoped contents write
 permission. Callers pin the shared workflows by full commit SHA.
 
-## Public interface evidence
+## Public interface changes
 
 Maintainers assess public interface and behavior changes against
 [Choosing the next version](#choosing-the-next-version), and describe the
