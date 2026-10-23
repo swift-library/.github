@@ -7,7 +7,7 @@
 <h1 align="center">.github</h1>
 
 <p align="center">
-  Publish independently versioned Swift packages with shared checks and release evidence.
+  Publish independently versioned Swift packages with shared checks.
 </p>
 
 <p align="center">

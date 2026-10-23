@@ -2,7 +2,7 @@
   "organization": {
     "login": "swift-library",
     "name": "Swift Library",
-    "about": "Publish independently versioned Swift packages with shared checks and release evidence."
+    "about": "Publish independently versioned Swift packages with shared checks."
   },
   "promise": "Swift packages for apps, developer tools, and AI agents.",
   "secondary": "Each package is versioned on its own and tested on the Swift versions and platforms it supports.",
