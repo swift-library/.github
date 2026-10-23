@@ -127,21 +127,22 @@ its own pin in the same change; for example, swift-userdefault pins swift-gyb.
 
 These rules apply to Swift packages.
 
-- Deployment floors use the current Xcode minimums: iOS 15, macOS 12, tvOS 15,
-  watchOS 9 and visionOS 1. A package declares higher floors when it needs
-  newer APIs.
-- Packages test the three most recent formally released major generations of
-  each platform they declare. Count actual releases, not version numbers.
-- Swift compiler and SwiftSyntax minimums are chosen separately from the system
-  window. CI job results record the toolchain, OS and SDK combinations that
-  were actually tested.
-- Every package requires Swift 6.0 or later. `minimum_swift` in
-  `.github/release.json` equals `swift-tools-version` in `Package.swift` and
-  the oldest compiler tested by the `compilers` list in
-  `.github/swift-package.json`. The shared validator checks
-  these declarations; the minimum compiler must have a CI entry.
-- Raising any floor or minimum is a breaking change.
-  Existing releases keep their original requirements.
+- Packages compile and test with the latest stable Xcode available to the
+  shared CI, through one entry in the `compilers` list of
+  `.github/swift-package.json`. `swift-tools-version` in `Package.swift` and
+  `minimum_swift` in `.github/release.json` equal that Xcode's Swift version;
+  the shared validator checks these declarations.
+- Deployment floors are the three most recent formally released major
+  generations of each platform a package declares. Count actual releases, not
+  version numbers. A command-line product inside a package follows the
+  package's floors.
+- Building against the latest SDK checks API availability for every supported
+  system at compile time. CI runs tests on its current macOS host and declared
+  simulators, not on older systems.
+- As of Xcode 26.6 the values are Swift 6.3, macOS 15, iOS 18, tvOS 18,
+  watchOS 11 and visionOS 2. They rise when a new Xcode or platform generation
+  ships. Raising any floor or minimum is a breaking change; existing releases
+  keep their original requirements.
 
 ## License
 
