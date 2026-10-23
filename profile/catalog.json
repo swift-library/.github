@@ -33,11 +33,11 @@
       "repositories": [
         {
           "name": "swift-interface-distiller",
-          "outcome": "Distill a Swift package to its public API: a compact interface to read, evidence to query and diff.",
+          "outcome": "Distill a Swift package to its public API: a compact interface to read, snapshots to query and diff.",
           "icon": "https://raw.githubusercontent.com/swift-library/swift-interface-distiller/HEAD/Documentation/Assets/Logo.png",
           "kind": "tool",
           "title": "swift-interface-distiller",
-          "about": "Distill a Swift package to its public API: a compact interface to read, evidence to query and diff."
+          "about": "Distill a Swift package to its public API: a compact interface to read, snapshots to query and diff."
         },
         {
           "name": "swift-semver",

@@ -570,7 +570,7 @@ record family policy for maintainer review; the shared checker validates the
     },
     "swift-library/swift-interface-distiller": {
       "default_branch": "master",
-      "description": "Distill a Swift package to its public API: a compact interface to read, evidence to query and diff.",
+      "description": "Distill a Swift package to its public API: a compact interface to read, snapshots to query and diff.",
       "topics": [
         "ai-agents",
         "api-diff",
