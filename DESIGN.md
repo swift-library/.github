@@ -42,10 +42,11 @@ typography:
     fontWeight: 400
     lineHeight: 43.2px
   terminal:
-    fontFamily: ui-monospace
+    fontFamily: Google Sans Code
     fontSize: 14px
     fontWeight: 400
     lineHeight: 21px
+    fontVariation: "'MONO' 1"
 rounded:
   none: 0px
   terminal-window: 10px
@@ -158,13 +159,17 @@ Social preview text uses Inter and Inter Display (SIL Open Font License),
 converted to outlines so cards never depend on installed fonts. Repository
 names are bold display weight; summaries are regular weight and wrap to at
 most three lines at 32 px. Repository names wrap to at most two lines at
-76 px. Terminal typography retains `ui-monospace` at 14 px.
+76 px.
 
-Image rendering requires explicit licensed font files matching these families
-and weights. This repository does not bundle them. Before rendering social
-previews, select matching variable fonts and declare their supported axes in
-each social typography's `fontVariation`; terminal rendering also needs an
-explicit font input. Profile rendering needs no font files.
+Terminal sessions are set in Google Sans Code with its `MONO` axis on, at 14 px,
+so output keeps its column grid. Their lettering is converted to glyph outlines
+from `.github/design/fonts/GoogleSansCode[MONO,wght].ttf`, the same file the
+agents-tools and skill-cli organizations use: Google Sans Code v7.001 from the
+[googlefonts/googlesans-code](https://github.com/googlefonts/googlesans-code)
+release archive (SHA-256
+`eebba2a438882396e8530cad6d6cb80182b0afb6e9e0ad07b7340359a53ba2e9`), licensed
+under the SIL Open Font License 1.1 (`.github/design/fonts/OFL.txt`). Profile
+rendering needs no font files.
 
 ## Layout
 
