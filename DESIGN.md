@@ -26,29 +26,34 @@ colors:
   terminal-light-output: "#24292f"
   terminal-light-dim: "#57606a"
 typography:
-  card-owner:
+  social-preview-owner:
     fontFamily: Inter
     fontSize: 30px
     fontWeight: 500
-  card-title:
+    lineHeight: 30px
+  social-preview-title:
     fontFamily: Inter Display
     fontSize: 76px
     fontWeight: 700
-  card-body:
+    lineHeight: 91.2px
+  social-preview-body:
     fontFamily: Inter
     fontSize: 32px
     fontWeight: 400
-    lineHeight: 1.35
+    lineHeight: 43.2px
   terminal:
     fontFamily: ui-monospace
     fontSize: 14px
+    fontWeight: 400
     lineHeight: 21px
 rounded:
   none: 0px
   terminal-window: 10px
 spacing:
-  card-text-left: 560px
-  card-text-right: 1200px
+  social-preview-padding: 90px
+  social-preview-icon: 420px
+  social-preview-gap: 50px
+  social-preview-stack: 24px
   terminal-padding: 20px
 components:
   org-icon-face:
@@ -57,42 +62,68 @@ components:
     backgroundColor: "{colors.primary}"
   badge-swift:
     backgroundColor: "{colors.badge-swift}"
-  social-card:
+  social-preview:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink}"
-    typography: "{typography.card-title}"
+    typography: "{typography.social-preview-title}"
     rounded: "{rounded.none}"
-    width: 1280px
-    height: 640px
-  social-card-summary:
+    padding: "{spacing.social-preview-padding}"
+    size: "{spacing.social-preview-icon}"
+  social-preview-gap:
+    width: "{spacing.social-preview-gap}"
+    height: "{spacing.social-preview-stack}"
+  social-preview-about:
+    backgroundColor: "{colors.surface}"
     textColor: "{colors.ink-secondary}"
-    typography: "{typography.card-body}"
-  social-card-owner:
+    typography: "{typography.social-preview-body}"
+  social-preview-owner:
+    backgroundColor: "{colors.surface}"
     textColor: "{colors.ink-tertiary}"
-    typography: "{typography.card-owner}"
-  terminal-window:
-    backgroundColor: "{colors.terminal-surface}"
-    textColor: "{colors.terminal-output}"
+    typography: "{typography.social-preview-owner}"
+  terminal:
+    backgroundColor: "{colors.terminal-light-surface}"
+    textColor: "{colors.terminal-light-output}"
     typography: "{typography.terminal}"
     rounded: "{rounded.terminal-window}"
     padding: "{spacing.terminal-padding}"
+    width: 560px
+  terminal-dark:
+    backgroundColor: "{colors.terminal-surface}"
+    textColor: "{colors.terminal-output}"
+  terminal-frame:
+    backgroundColor: "{colors.terminal-light-border}"
+    size: 1px
+  terminal-frame-dark:
+    backgroundColor: "{colors.terminal-border}"
   terminal-title-bar:
+    backgroundColor: "{colors.terminal-light-bar}"
+    textColor: "{colors.terminal-light-dim}"
+    height: 34px
+  terminal-title-bar-dark:
     backgroundColor: "{colors.terminal-bar}"
     textColor: "{colors.terminal-dim}"
-    height: 34px
-  terminal-divider:
-    backgroundColor: "{colors.terminal-border}"
-    height: 1px
   terminal-prompt:
+    backgroundColor: "{colors.terminal-light-surface}"
+    textColor: "{colors.terminal-light-prompt}"
+  terminal-prompt-dark:
+    backgroundColor: "{colors.terminal-surface}"
     textColor: "{colors.terminal-prompt}"
   terminal-command:
+    backgroundColor: "{colors.terminal-light-surface}"
+    textColor: "{colors.terminal-light-command}"
+  terminal-command-dark:
+    backgroundColor: "{colors.terminal-surface}"
     textColor: "{colors.terminal-command}"
   readme-logo:
     size: 160px
-  profile-logo:
+  profile-header:
     size: 128px
-  table-logo:
+  profile-member-header:
+    size: 64px
+  profile-row:
     size: 40px
+  profile-member-row:
+    size: 24px
 ---
 
 # swift-library Design
@@ -113,8 +144,8 @@ quiet: light neutral surfaces, near-black text, no decoration.
 - **Badge Swift** (`#F05138`) colors the Swift version badge.
 - **Ink**, **Ink Secondary**, and **Ink Tertiary** set repository names,
   summaries, and owner labels on social preview cards.
-- **Surface** to **Surface Dim** is the vertical gradient behind social
-  preview cards.
+- **Surface** is the social preview ground; **Surface Dim** is its companion
+  neutral surface token.
 - The **Terminal** colors define the dark window used for command-line demos.
   **Terminal Light** supplies the corresponding light appearance. Both use a
   green prompt and keep commands distinct from output.
@@ -127,21 +158,27 @@ Social preview text uses Inter and Inter Display (SIL Open Font License),
 converted to outlines so cards never depend on installed fonts. Repository
 names are bold display weight; summaries are regular weight and wrap to at
 most three lines at 32 px. Repository names wrap to at most two lines at
-76 px. Terminal demos use the viewer's monospace font at 14 px.
+76 px. Terminal typography retains `ui-monospace` at 14 px.
+
+Image rendering requires explicit licensed font files matching these families
+and weights. This repository does not bundle them. Before rendering social
+previews, select matching variable fonts and declare their supported axes in
+each social typography's `fontVariation`; terminal rendering also needs an
+explicit font input. Profile rendering needs no font files.
 
 ## Layout
 
 Social preview cards are 1280 by 640. The icon sits centered at x 300 with a
-420 px square; text starts at x 560 and wraps before x 1200, vertically
+420 px square; text starts at x 560 and ends at x 1190, vertically
 centered as one block. README headers center the logo at 160 px above the
 repository name.
 
 ## Repository presentation
 
 The first screen answers what the repository does, why it differs, and how to
-start. Every image identifies, demonstrates, or compares. An icon accompanies
-its linked name; the umbrella mark at the top of the organization profile is
-the only standalone icon. Text remains text.
+start. Every image identifies, demonstrates, or compares. A repository icon
+accompanies its linked name; the organization profile starts with the umbrella
+mark. Text remains text.
 
 Every repository uses the same centered header: a linked 160 px logo, an `h1`
 name, the tagline, applicable flat badges, and the navigation row. Badge order
@@ -157,10 +194,12 @@ Section and navigation order is Overview, Quick look, Install, Usage,
 Requirements, Documentation, Contributing, License. Overview has two or three
 sentences. Put details, measurements, scope, and limits in Documentation and
 link to them. Library Quick look sections show at most 12 lines of working
-Swift. Command-line tools show a real recorded session, rendered with the
-terminal tokens by `Scripts/render-terminal.py`. Commit the recording and
-light/dark SVG variants, use `<picture>` with `prefers-color-scheme`, and check
-generated bytes in CI. Do not add emoji, badge walls, or another table of contents.
+Swift. Command-line tools show a real recorded session, rendered locally with
+the terminal tokens by the `github-readme-design` toolchain. Commit the
+recording and light/dark SVG variants and check their generated bytes locally.
+Use `<picture>` with `prefers-color-scheme`; the dark appearance remains the
+terminal's default presentation, with the light variant for light pages.
+Do not add emoji, badge walls, or another table of contents.
 
 Review every custom image in light and dark. GitHub presentation changes are
 reviewed through draft PRs with rendered light/dark screenshots of the profile,
@@ -182,8 +221,9 @@ The tagline, Overview opening, and Quick look each add different information.
 Overview explains why and how in other words. Quick look needs an introductory
 sentence only when it adds information.
 
-Repository descriptions, taglines, catalog summaries, and social-card About
-text use the same sentence, at most 110 characters. Keep drifting counts and release
+Repository descriptions, taglines, catalog `about`, and social-preview About
+text use the same sentence, at most 110 characters. Catalog `outcome` carries
+the reviewed reader outcome. Keep drifting counts and release
 versions out of these short fields; put them in generated or measured
 documentation. Fixed standard identifiers, such as SemVer 2.0.0, can identify
 the implemented contract. Keep README and DocC introductions consistent.
@@ -203,25 +243,34 @@ Documentation · Contributing · Security · Support. The account description is
 the compact form of the same promise, at most 160 characters. The Swift bird avatar remains governed
 by [Brand/Avatar/README.md](Brand/Avatar/README.md).
 
-`profile/catalog.json` owns the promise, navigation roles, reader-job groups,
-ordering, and reviewed outcome sentences. `Scripts/render-profile.py`
-generates the profile; CI checks byte-identical output and complete membership
-of public self-owned repositories. Each catalog row has a linked 40 px icon,
-a bold linked name, and the outcome sentence, in HTML tables without header
-rows. Navigation repositories appear
-in the header rather than as duplicate catalog rows. Do not assemble
-membership-dependent presentation artifacts by hand.
+`profile/catalog.json` owns the organization identity, promise, navigation,
+reader-job groups, ordering, icons, repository kinds, titles, About text and
+reviewed outcome sentences. It includes every public non-archived organization
+repository except `.github`. Each catalog row has a 40 px icon, a bold linked
+name, and the outcome sentence, in HTML tables without header rows.
 
-The footer uses `<sub>` for “Maintained by @showxu (https://showxu.github.io)”,
-with linked owner and website. The website landing uses the same promise,
-job grouping, and umbrella icon.
+The `github-readme-design` TypeScript toolchain generates `profile/README.md`
+from this DESIGN and the catalog. Use its pinned Node runtime and dependencies;
+`<toolchain>` below is the selected package's `scripts` directory:
+
+```sh
+node <toolchain>/src/cli.ts design lint --design DESIGN.md
+node <toolchain>/src/cli.ts profile render --design DESIGN.md --catalog profile/catalog.json --out profile/README.md
+node <toolchain>/src/cli.ts profile check --design DESIGN.md --catalog profile/catalog.json --out profile/README.md
+```
+
+Lint must report zero errors and zero warnings, and `profile check` must match
+the generated bytes. Verify catalog membership and About values against
+GitHub when updating it. Do not edit the generated profile by hand.
+
+The catalog's maintainer link closes the profile with “Maintained by @showxu”.
+The website landing uses the same promise, job grouping, and umbrella icon.
 
 ## Elevation & Depth
 
 Depth lives inside the icons: stacked bands read as physical thickness, and
 raised glyphs cast a soft contact shadow on the face. Pages and cards stay
-flat. A faint radial glow in the repository's hue may sit behind the icon on
-social cards.
+flat. Social previews use the solid Surface ground.
 
 ## Shapes
 
@@ -233,12 +282,25 @@ are square.
 
 ## Components
 
-- **Social card**: icon, owner label, repository name, and the About sentence.
-  Nothing else.
-- **Terminal window**: title bar with three window dots and an optional
-  centered title, then real command output.
-- **Logos**: 160 px in README headers, 128 px on the organization profile,
-  40 px in profile tables.
+The toolchain uses base components for light appearance and overlays each
+`-dark` component for dark appearance. Terminal base components reference the
+Terminal Light palette; their dark counterparts reference the default Terminal
+palette. Both appearances share geometry and typography.
+
+| Component | Role |
+| --- | --- |
+| `social-preview` | Card ground, title typography, padding and icon square |
+| `social-preview-owner` | Organization login |
+| `social-preview-about` | Complete repository About sentence |
+| `social-preview-gap` | Space after the icon and between text blocks |
+| `terminal`, `terminal-dark` | Window body and output text |
+| `terminal-frame`, `terminal-frame-dark` | Outline and title-bar divider |
+| `terminal-title-bar`, `terminal-title-bar-dark` | Title band and centered session title |
+| `terminal-prompt`, `terminal-prompt-dark` | Prompt text |
+| `terminal-command`, `terminal-command-dark` | Command text |
+| `readme-logo` | 160 px repository header logo |
+| `profile-header`, `profile-row` | 128 px public mark and 40 px repository icons |
+| `profile-member-header`, `profile-member-row` | 64 px member mark and 24 px repository icons |
 
 ## Do's and Don'ts
 
