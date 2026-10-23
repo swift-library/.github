@@ -74,7 +74,7 @@
         {
           "name": "github-workflows",
           "outcome": "Shared GitHub Actions workflows and checks for swift-library repositories.",
-          "icon": "https://raw.githubusercontent.com/swift-library/github-workflows/HEAD/Documentation/Assets/Logo.png",
+          "icon": "https://raw.githubusercontent.com/swift-library/.github/HEAD/Documentation/Assets/Logo.png",
           "kind": "tool",
           "title": "github-workflows",
           "about": "Shared GitHub Actions workflows and checks for swift-library repositories."
@@ -82,7 +82,7 @@
         {
           "name": "swift-library.github.io",
           "outcome": "Find Swift packages, copy install commands, and read their API documentation.",
-          "icon": "https://raw.githubusercontent.com/swift-library/swift-library.github.io/HEAD/Documentation/Assets/Logo.png",
+          "icon": "https://raw.githubusercontent.com/swift-library/.github/HEAD/Documentation/Assets/Logo.png",
           "kind": "website",
           "title": "swift-library.github.io",
           "about": "Find Swift packages, copy install commands, and read their API documentation."
@@ -123,22 +123,6 @@
           "kind": "library",
           "title": "swift-pdf",
           "about": "Build PDF viewers in SwiftUI with search, page overlays, and navigation driven by your controls."
-        },
-        {
-          "name": "swift-cmark",
-          "outcome": "CommonMark parsing and rendering library and program in C",
-          "icon": "https://raw.githubusercontent.com/swift-library/swift-cmark/HEAD/Documentation/Assets/Logo.png",
-          "kind": "library",
-          "title": "swift-cmark",
-          "about": "CommonMark parsing and rendering library and program in C"
-        },
-        {
-          "name": "swift-markdown",
-          "outcome": "A Swift package for parsing, building, editing, and analyzing Markdown documents.",
-          "icon": "https://raw.githubusercontent.com/swift-library/swift-markdown/HEAD/Documentation/Assets/Logo.png",
-          "kind": "library",
-          "title": "swift-markdown",
-          "about": "A Swift package for parsing, building, editing, and analyzing Markdown documents."
         }
       ]
     },
