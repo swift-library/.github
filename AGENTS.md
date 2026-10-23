@@ -1,13 +1,14 @@
 # swift-library Shared Standards Agent Guide
 
-Read README.md first. This repository owns shared policy and reusable workflows.
+Read README.md first. This repository owns shared policy, community documents,
+the profile catalog and design sources. Shared automation belongs to swift-library/github-workflows.
 Package-specific source, versions and validation remain in each package.
 
 ## First-Principles Work
 
 Name the affected behavior, owning package, compatibility invariant, variable
-inputs and validation before editing. Shared changes need syntax validation
-and a consuming repository workflow run before adoption.
+inputs and validation before editing. Caller changes need syntax validation
+and a pinned workflow run before adoption.
 
 ## Canonical Artifacts
 
@@ -47,10 +48,12 @@ and a consuming repository workflow run before adoption.
 
 Read VERSIONING.md before changing release policy. Read MAINTENANCE.md before
 changing a GitHub setting, ruleset, App, or required check, and update it in
-the same pull request. Workflow interfaces and
-adoption steps belong in Documentation/Reference/WorkflowIntegration.md. Use
-.github/workflows for reusable automation and package-local configuration for
-variable values.
+the same pull request. Package adoption belongs in
+[CONTRIBUTING.md](CONTRIBUTING.md#new-packages); workflow interfaces belong in the
+[github-workflows README](https://github.com/swift-library/github-workflows#readme).
+Keep thin callers in .github/workflows and variable values in package-owned
+configuration. Render presentation assets locally with the
+[github-readme-design toolchain](https://github.com/showxu/skills/blob/master/skills/github-readme-design/references/renderers.md).
 
 ## Authority
 
@@ -65,7 +68,9 @@ records. Preserve existing source ownership and historical records.
 
 ## Validation
 
-Run actionlint for workflow changes and test a pinned workflow from a consumer.
+Run actionlint for caller changes, git diff --check and relative Markdown link
+checks. Run the local profile check against profile/README.md using the commands
+in DESIGN.md. Verify a pinned workflow run before adopting a caller revision.
 
 ## Code Review Rules
 
@@ -77,9 +82,9 @@ Run actionlint for workflow changes and test a pinned workflow from a consumer.
 
 ### Workflow compatibility
 
-- Flag a reusable workflow interface change without a compatible caller path
-  and consuming-repository evidence. Safe path: validate the pinned workflow
-  in a caller and document the adoption requirements.
+- Flag a caller change that disagrees with the shared workflow interface or
+  required check names. Safe path: follow the github-workflows README and the
+  required-check table in MAINTENANCE.md, then validate the pinned caller.
 
 ### Claims and release integrity
 

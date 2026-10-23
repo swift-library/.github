@@ -8,8 +8,8 @@ file in the same pull request.
 
 1. Work on a branch. Maintainer commits use the owner's name and noreply email
    and are SSH-signed. Attribution trailers never appear.
-2. Run the repository's own check before pushing, for a Swift package
-   `Scripts/check`.
+2. Run the affected repository's declared validation before pushing. This
+   repository's local checks are in [Contributing](CONTRIBUTING.md).
 3. Open a pull request against `master`. Its title and commit subjects follow
    Conventional Commits: `type(scope)!: subject`, with optional scope and `!`.
    Types are `build`, `chore`, `ci`, `docs`, `feat`, `fix`, `perf`, `refactor`,
@@ -25,7 +25,7 @@ file in the same pull request.
 
 External pull requests and bot-authored changes are welcome. Pull-request
 policy checks the title, added content and added or modified file paths, as
-defined in [Source policy](Documentation/Reference/WorkflowIntegration.md#source-policy).
+defined in [shared policy workflow](https://github.com/swift-library/github-workflows#calling-validation-and-policy).
 Default-branch push policy requires
 GitHub-verified commits committed by GitHub or the owner; it does not restrict
 the original author. Dependabot, updater Apps and GitHub Actions may author
@@ -57,9 +57,6 @@ The allowed-signers file contains the signer's email followed by the SSH public
 key. Register that public key as a signing key on GitHub. Verify commits with
 `git verify-commit HEAD` and tags with `git verify-tag vX.Y.Z`.
 Release tags use the signed annotated format in [Versioning](VERSIONING.md#tags).
-
-The shared standards repository's `result` check includes published icon
-validation. The pinned generator and design family are also checked weekly.
 
 ## GitHub Settings
 
@@ -93,11 +90,12 @@ including its required checks, signatures and pull-request requirements.
 | Repository | Required checks |
 | --- | --- |
 | `.github` | `policy / policy`, `result` |
+| `github-workflows` | `policy / policy`, `result` |
 | `skills` | `policy / policy`, `result` |
 | `swift-library.github.io` | `policy / policy`, `result` |
 | `homebrew-tap` | `policy / policy`, `result` |
 | `swift-sh` | `policy / policy`, `validate / result` |
-| `swift-codex` | `policy / policy`, `result` |
+| `swift-codex` | `policy / policy`, `validate / result` |
 | `swift-package-template` | `policy / policy`, `validate / result` |
 | `swift-data-writable` | `policy / policy`, `validate / result` |
 | `swift-benchmark` | `policy / policy`, `validate / result` |
@@ -110,13 +108,12 @@ including its required checks, signatures and pull-request requirements.
 | `swift-appstoreconnect` | `policy / policy`, `validate / result` |
 | `swift-interface-distiller` | `policy / policy`, `validate / result` |
 
-Every row keeps its existing required contexts when workflows are split.
 `policy / policy` comes from the `policy` job in `source-policy.yml`, which
 includes pull-request title edits. Validation callers run on `opened`,
 `synchronize`, `reopened`, `master` pushes and manual dispatch. Each caller
 cancels superseded runs using its workflow name and pull-request number or
 branch ref; release and publication runs are never cancelled. See
-[Workflow integration](Documentation/Reference/WorkflowIntegration.md#source-policy)
+[github-workflows](https://github.com/swift-library/github-workflows#calling-validation-and-policy)
 for the caller contract. Check this table against active rulesets before
 upgrading callers, and verify the resulting check names on their pull requests.
 
@@ -134,82 +131,497 @@ No Actions secrets or variables exist at organization or repository level.
 
 ### Settings declaration
 
-`Scripts/check-settings.py` reads this declaration and the required-check table
-above. The declaration owns exact API parameters; the table owns job names.
-Changes to either must accompany the corresponding GitHub setting change.
-The checker reads metadata only and never retrieves secret values.
-It also compares the content of reusable workflows and their shared script
-sources at each caller pin with the latest shared `master` for self-owned
-repositories. Generated inline scripts are covered by the workflow files.
-Drift lists the shared files whose Git blob identities or file modes differ;
-documentation and settings-check changes do not require caller pin updates.
-Unknown or unreadable pins are reported as errors. Pin drift, pin errors and
-unavailable observations do not change its exit status: callers advance through
-reviewed pull requests, while the settings declaration remains enforced.
+The [organization checker](https://github.com/swift-library/github-workflows#organization-checks)
+reads this declaration. Family defaults own the API parameters; each repository
+entry owns its description, topics, branch, required checks and release-tag
+patterns. Keep the required-check table above consistent with those entries.
+Changes to the declaration accompany the corresponding GitHub setting change.
 
+This repository's caller uses public mode to compare catalog membership and
+About descriptions. Online mode additionally checks repository settings,
+workflow-token permissions, private vulnerability reporting and complete
+branch/tag rulesets. It requires an administrative read token. The checker uses
+read-only API requests; unavailable observations and drift fail the check.
+
+The supplemental legacy-protection, Actions credential metadata and App fields
+record family policy for maintainer review; the shared checker validates the
+`defaults` and `repositories` sections.
+
+<!-- settings-declaration -->
 ```json
 {
-  "organization": "swift-library",
-  "default_branch": "master",
+  "schema": 1,
+  "defaults": {
+    "repository": {
+      "allow_squash_merge": true,
+      "allow_merge_commit": false,
+      "allow_rebase_merge": false,
+      "delete_branch_on_merge": true,
+      "squash_merge_commit_title": "PR_TITLE",
+      "squash_merge_commit_message": "BLANK"
+    },
+    "workflow_token": {
+      "default_workflow_permissions": "read",
+      "can_approve_pull_request_reviews": false
+    },
+    "private_vulnerability_reporting": {
+      "enabled": true
+    },
+    "branch_ruleset": {
+      "name": "default branch",
+      "target": "branch",
+      "enforcement": "active",
+      "bypass_actors": [],
+      "conditions": {
+        "ref_name": {
+          "include": [
+            "~DEFAULT_BRANCH"
+          ],
+          "exclude": []
+        }
+      },
+      "rules": [
+        {
+          "type": "deletion"
+        },
+        {
+          "type": "non_fast_forward"
+        },
+        {
+          "type": "required_signatures"
+        },
+        {
+          "type": "pull_request",
+          "parameters": {
+            "allowed_merge_methods": [
+              "squash"
+            ],
+            "required_approving_review_count": 0,
+            "dismiss_stale_reviews_on_push": false,
+            "dismissal_restriction": {
+              "allowed_actors": [],
+              "enabled": false
+            },
+            "require_code_owner_review": false,
+            "require_extra_approval_for_unattributed_changes": true,
+            "require_last_push_approval": false,
+            "required_review_thread_resolution": true,
+            "required_reviewers": []
+          }
+        }
+      ]
+    },
+    "status_checks": {
+      "integration_id": 15368,
+      "strict_required_status_checks_policy": false,
+      "do_not_enforce_on_create": false
+    },
+    "tag_ruleset": {
+      "name": "Immutable release tags",
+      "target": "tag",
+      "enforcement": "active",
+      "bypass_actors": [],
+      "conditions": {
+        "ref_name": {
+          "include": [
+            "refs/tags/v*"
+          ],
+          "exclude": []
+        }
+      },
+      "rules": [
+        {
+          "type": "deletion"
+        },
+        {
+          "type": "update"
+        },
+        {
+          "type": "non_fast_forward"
+        }
+      ]
+    }
+  },
+  "repositories": {
+    "swift-library/.github": {
+      "default_branch": "master",
+      "description": "Publish independently versioned Swift packages with shared checks.",
+      "topics": [
+        "community",
+        "continuous-integration",
+        "documentation",
+        "github-actions",
+        "release-automation",
+        "swift"
+      ],
+      "required_checks": [
+        "policy / policy",
+        "result"
+      ],
+      "release_tag_patterns": [
+        "refs/tags/v*"
+      ]
+    },
+    "swift-library/skills": {
+      "default_branch": "master",
+      "description": "Build and maintain Swift packages and Apple apps with agent skills in a single plugin.",
+      "topics": [
+        "agent-skills",
+        "ai-agents",
+        "claude-code",
+        "codex",
+        "ios",
+        "macos",
+        "swift",
+        "swiftui",
+        "uikit"
+      ],
+      "required_checks": [
+        "policy / policy",
+        "result"
+      ],
+      "release_tag_patterns": [
+        "refs/tags/v*"
+      ]
+    },
+    "swift-library/swift-library.github.io": {
+      "default_branch": "master",
+      "description": "Find Swift packages, copy install commands, and read their API documentation.",
+      "topics": [
+        "developer-tools",
+        "docc",
+        "documentation",
+        "github-pages",
+        "swift"
+      ],
+      "required_checks": [
+        "policy / policy",
+        "result"
+      ],
+      "release_tag_patterns": [
+        "refs/tags/v*"
+      ]
+    },
+    "swift-library/homebrew-tap": {
+      "default_branch": "master",
+      "description": "Install swift-library command-line tools from release archives verified by SHA-256.",
+      "topics": [
+        "cli",
+        "developer-tools",
+        "homebrew",
+        "homebrew-tap",
+        "swift"
+      ],
+      "required_checks": [
+        "policy / policy",
+        "result"
+      ],
+      "release_tag_patterns": [
+        "refs/tags/v*"
+      ]
+    },
+    "swift-library/swift-sh": {
+      "default_branch": "master",
+      "description": "Run single-file Swift scripts with package dependencies declared inline.",
+      "topics": [
+        "cli",
+        "developer-tools",
+        "scripting",
+        "shebang",
+        "swift",
+        "swift-package-manager",
+        "swift-script"
+      ],
+      "required_checks": [
+        "policy / policy",
+        "validate / result"
+      ],
+      "release_tag_patterns": [
+        "refs/tags/v*"
+      ]
+    },
+    "swift-library/swift-codex": {
+      "default_branch": "master",
+      "description": "Drive the Codex CLI from Swift through separate exec, App Server, and MCP interfaces.",
+      "topics": [
+        "ai-agents",
+        "client-library",
+        "codex",
+        "developer-tools",
+        "json-rpc",
+        "jsonl",
+        "mcp",
+        "swift",
+        "swift-package-manager",
+        "websocket"
+      ],
+      "required_checks": [
+        "policy / policy",
+        "validate / result"
+      ],
+      "release_tag_patterns": [
+        "refs/tags/v*"
+      ]
+    },
+    "swift-library/swift-package-template": {
+      "default_branch": "master",
+      "description": "A complete Swift package to create new swift-library packages from, with shared CI and release checks.",
+      "topics": [
+        "developer-tools",
+        "github-actions",
+        "release-automation",
+        "swift",
+        "swift-package-manager",
+        "template"
+      ],
+      "required_checks": [
+        "policy / policy",
+        "validate / result"
+      ],
+      "release_tag_patterns": [
+        "refs/tags/v*"
+      ]
+    },
+    "swift-library/swift-data-writable": {
+      "default_branch": "master",
+      "description": "Insert, delete, and reorder SwiftData query results through a projected collection.",
+      "topics": [
+        "data-binding",
+        "persistence",
+        "swift",
+        "swift-macros",
+        "swift-package-manager",
+        "swiftdata",
+        "swiftui"
+      ],
+      "required_checks": [
+        "policy / policy",
+        "validate / result"
+      ],
+      "release_tag_patterns": [
+        "refs/tags/v*"
+      ]
+    },
+    "swift-library/swift-benchmark": {
+      "default_branch": "master",
+      "description": "Catch performance regressions beside your tests with JSON baselines and metric budgets.",
+      "topics": [
+        "benchmark",
+        "ci",
+        "instrumentation",
+        "performance",
+        "performance-testing",
+        "profiling",
+        "swift",
+        "swift-package-manager",
+        "swift-testing"
+      ],
+      "required_checks": [
+        "policy / policy",
+        "validate / result"
+      ],
+      "release_tag_patterns": [
+        "refs/tags/v*"
+      ]
+    },
+    "swift-library/swift-redux": {
+      "default_branch": "master",
+      "description": "Manage unidirectional app state with one store, reducers, middleware, and live subscriptions.",
+      "topics": [
+        "middleware",
+        "redux",
+        "state-management",
+        "subscriptions",
+        "swift",
+        "swift-package-manager",
+        "unidirectional-data-flow"
+      ],
+      "required_checks": [
+        "policy / policy",
+        "validate / result"
+      ],
+      "release_tag_patterns": [
+        "refs/tags/v*"
+      ]
+    },
+    "swift-library/swift-userdefault": {
+      "default_branch": "master",
+      "description": "Persist primitives, raw-value enums, and Codable models through one UserDefaults property wrapper.",
+      "topics": [
+        "codable",
+        "persistence",
+        "preferences",
+        "property-wrapper",
+        "swift",
+        "swift-package-manager",
+        "userdefaults"
+      ],
+      "required_checks": [
+        "policy / policy",
+        "validate / result"
+      ],
+      "release_tag_patterns": [
+        "refs/tags/v*"
+      ]
+    },
+    "swift-library/swift-gyb": {
+      "default_branch": "master",
+      "description": "Generate Swift sources and resource files from Python templates during SwiftPM builds.",
+      "topics": [
+        "code-generation",
+        "gyb",
+        "python",
+        "swift",
+        "swift-package-manager",
+        "swiftpm-plugin",
+        "templating"
+      ],
+      "required_checks": [
+        "policy / policy",
+        "validate / result"
+      ],
+      "release_tag_patterns": [
+        "refs/tags/v*"
+      ]
+    },
+    "swift-library/swift-semver": {
+      "default_branch": "master",
+      "description": "Parse, compare, constrain, and increment SemVer 2.0.0 versions using only the Swift standard library.",
+      "topics": [
+        "semantic-versioning",
+        "semver",
+        "swift",
+        "swift-package-manager",
+        "version-comparison",
+        "versioning"
+      ],
+      "required_checks": [
+        "policy / policy",
+        "validate / result"
+      ],
+      "release_tag_patterns": [
+        "refs/tags/v*"
+      ]
+    },
+    "swift-library/swift-pdf": {
+      "default_branch": "master",
+      "description": "Build PDF viewers in SwiftUI with search, page overlays, and navigation driven by your controls.",
+      "topics": [
+        "document-viewer",
+        "ios",
+        "macos",
+        "pdf",
+        "pdfkit",
+        "swift",
+        "swift-package-manager",
+        "swiftui"
+      ],
+      "required_checks": [
+        "policy / policy",
+        "validate / result"
+      ],
+      "release_tag_patterns": [
+        "refs/tags/v*"
+      ]
+    },
+    "swift-library/swift-json-schema": {
+      "default_branch": "master",
+      "description": "Validate JSON against JSON Schema without losing number precision.",
+      "topics": [
+        "cli",
+        "json",
+        "json-schema",
+        "serialization",
+        "swift",
+        "swift-package-manager",
+        "validation"
+      ],
+      "required_checks": [
+        "policy / policy",
+        "validate / result"
+      ],
+      "release_tag_patterns": [
+        "refs/tags/v*"
+      ]
+    },
+    "swift-library/swift-appstoreconnect": {
+      "default_branch": "master",
+      "description": "Build typed App Store Connect integrations and preview CLI writes before confirming them.",
+      "topics": [
+        "app-store",
+        "app-store-connect",
+        "cli",
+        "code-signing",
+        "openapi",
+        "swift",
+        "swift-package-manager",
+        "testflight"
+      ],
+      "required_checks": [
+        "policy / policy",
+        "validate / result"
+      ],
+      "release_tag_patterns": [
+        "refs/tags/v*"
+      ]
+    },
+    "swift-library/swift-interface-distiller": {
+      "default_branch": "master",
+      "description": "Distill a Swift package to its public API: a compact interface to read, evidence to query and diff.",
+      "topics": [
+        "ai-agents",
+        "api-diff",
+        "api-documentation",
+        "cli",
+        "developer-tools",
+        "public-api",
+        "swift",
+        "swift-package-manager",
+        "symbol-graph"
+      ],
+      "required_checks": [
+        "policy / policy",
+        "validate / result"
+      ],
+      "release_tag_patterns": [
+        "refs/tags/v*"
+      ]
+    },
+    "swift-library/github-workflows": {
+      "default_branch": "master",
+      "description": "Shared GitHub Actions workflows and checks for swift-library repositories.",
+      "topics": [],
+      "required_checks": [
+        "policy / policy",
+        "result"
+      ],
+      "release_tag_patterns": [
+        "refs/tags/v*"
+      ]
+    }
+  },
   "legacy_branch_protection": null,
-  "merge": {
-    "allow_squash_merge": true,
-    "allow_merge_commit": false,
-    "allow_rebase_merge": false,
-    "delete_branch_on_merge": true,
-    "squash_merge_commit_title": "PR_TITLE",
-    "squash_merge_commit_message": "BLANK"
+  "organization_actions": {
+    "secrets": [],
+    "variables": {}
   },
-  "workflow_token": {
-    "default_workflow_permissions": "read",
-    "can_approve_pull_request_reviews": false
+  "repository_actions": {
+    "secrets": [],
+    "variables": {}
   },
-  "branch_ruleset": {
-    "name": "default branch",
-    "target": "branch",
-    "enforcement": "active",
-    "bypass_actors": [],
-    "conditions": {"ref_name": {"include": ["~DEFAULT_BRANCH"], "exclude": []}},
-    "rules": [
-      {"type": "deletion"},
-      {"type": "non_fast_forward"},
-      {"type": "required_signatures"},
-      {"type": "pull_request", "parameters": {
-        "allowed_merge_methods": ["squash"],
-        "required_approving_review_count": 0,
-        "dismiss_stale_reviews_on_push": false,
-        "dismissal_restriction": {"allowed_actors": [], "enabled": false},
-        "require_code_owner_review": false,
-        "require_extra_approval_for_unattributed_changes": true,
-        "require_last_push_approval": false,
-        "required_review_thread_resolution": true,
-        "required_reviewers": []
-      }}
-    ]
-  },
-  "status_checks": {
-    "integration_id": 15368,
-    "strict_required_status_checks_policy": false,
-    "do_not_enforce_on_create": false
-  },
-  "tag_ruleset": {
-    "name": "Immutable release tags",
-    "target": "tag",
-    "enforcement": "active",
-    "bypass_actors": [],
-    "conditions": {"ref_name": {"include": ["refs/tags/v*"], "exclude": []}},
-    "rules": [{"type": "deletion"}, {"type": "update"}, {"type": "non_fast_forward"}]
-  },
-  "organization_actions": {"secrets": [], "variables": {}},
-  "repository_actions": {"secrets": [], "variables": {}},
   "repository_action_overrides": {},
   "apps": {
     "chatgpt-codex-connector": {
       "repository_selection": "all",
       "permissions": {
-        "actions": "write", "contents": "write", "issues": "write",
-        "pull_requests": "write", "workflows": "write", "checks": "read",
-        "statuses": "read", "metadata": "read"
+        "actions": "write",
+        "contents": "write",
+        "issues": "write",
+        "pull_requests": "write",
+        "workflows": "write",
+        "checks": "read",
+        "statuses": "read",
+        "metadata": "read"
       }
     }
   }

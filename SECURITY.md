@@ -6,7 +6,7 @@ steps and impact. Private vulnerability reporting must be enabled before a
 participating repository is published.
 
 For vulnerabilities in the shared workflows, use
-[private vulnerability reporting](https://github.com/swift-library/.github/security/advisories/new).
+[private vulnerability reporting](https://github.com/swift-library/github-workflows/security/advisories/new).
 
 The latest released line is maintained by default. Older-line fixes are evaluated
 for the affected package and announced in its release notes.
