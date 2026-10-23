@@ -95,7 +95,7 @@ including its required checks, signatures and pull-request requirements.
 | `swift-library.github.io` | `policy / policy`, `result` |
 | `homebrew-tap` | `policy / policy`, `result` |
 | `swift-sh` | `policy / policy`, `validate / result` |
-| `swift-codex` | `policy / policy`, `validate / result` |
+| `swift-codex` | `policy / policy`, `result` |
 | `swift-package-template` | `policy / policy`, `validate / result` |
 | `swift-data-writable` | `policy / policy`, `validate / result` |
 | `swift-benchmark` | `policy / policy`, `validate / result` |
@@ -107,6 +107,9 @@ including its required checks, signatures and pull-request requirements.
 | `swift-json-schema` | `policy / policy`, `validate / result` |
 | `swift-appstoreconnect` | `policy / policy`, `validate / result` |
 | `swift-interface-distiller` | `policy / policy`, `validate / result` |
+
+`swift-codex`'s `result` aggregates the shared validation with its Windows
+product builds and real-binary integration tests.
 
 `policy / policy` comes from the `policy` job in `source-policy.yml`, which
 includes pull-request title edits. Validation callers run on `opened`,
@@ -357,7 +360,7 @@ record family policy for maintainer review; the shared checker validates the
       ],
       "required_checks": [
         "policy / policy",
-        "validate / result"
+        "result"
       ],
       "release_tag_patterns": [
         "refs/tags/v*"
