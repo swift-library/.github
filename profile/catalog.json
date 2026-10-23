@@ -1,13 +1,31 @@
 {
-  "organization": "swift-library",
-  "promise": {
-    "heading": "Swift packages for apps, developer tools, and AI agents.",
-    "secondary": "Each package is versioned on its own and tested on the Swift versions and platforms it supports.",
-    "description": "Swift packages for apps, developer tools, and AI agents."
+  "organization": {
+    "login": "swift-library",
+    "name": "Swift Library",
+    "about": "Publish independently versioned Swift packages with shared checks."
   },
+  "promise": "Swift packages for apps, developer tools, and AI agents.",
+  "secondary": "Each package is versioned on its own and tested on the Swift versions and platforms it supports.",
+  "description": "Swift packages for apps, developer tools, and AI agents.",
+  "website": "https://swift-library.github.io/",
+  "mark": "https://raw.githubusercontent.com/swift-library/.github/HEAD/Documentation/Assets/Logo.png",
   "navigation": {
-    "documentation": "swift-library.github.io",
-    "standards": ".github"
+    "documentation": {
+      "label": "Documentation",
+      "url": "https://swift-library.github.io/"
+    },
+    "contributing": {
+      "label": "Contributing",
+      "url": "https://github.com/swift-library/.github/blob/master/CONTRIBUTING.md"
+    },
+    "security": {
+      "label": "Security",
+      "url": "https://github.com/swift-library/.github/blob/master/SECURITY.md"
+    },
+    "support": {
+      "label": "Support",
+      "url": "https://github.com/swift-library/.github/blob/master/SUPPORT.md"
+    }
   },
   "groups": [
     {
@@ -15,23 +33,59 @@
       "repositories": [
         {
           "name": "swift-interface-distiller",
-          "summary": "Distill a Swift package to its public API: a compact interface to read, evidence to query and diff."
+          "outcome": "Distill a Swift package to its public API: a compact interface to read, evidence to query and diff.",
+          "icon": "https://raw.githubusercontent.com/swift-library/swift-interface-distiller/HEAD/Documentation/Assets/Logo.png",
+          "kind": "tool",
+          "title": "swift-interface-distiller",
+          "about": "Distill a Swift package to its public API: a compact interface to read, evidence to query and diff."
         },
         {
           "name": "swift-semver",
-          "summary": "Parse, compare, constrain, and increment SemVer 2.0.0 versions using only the Swift standard library."
+          "outcome": "Parse, compare, constrain, and increment SemVer 2.0.0 versions using only the Swift standard library.",
+          "icon": "https://raw.githubusercontent.com/swift-library/swift-semver/HEAD/Documentation/Assets/Logo.png",
+          "kind": "library",
+          "title": "swift-semver",
+          "about": "Parse, compare, constrain, and increment SemVer 2.0.0 versions using only the Swift standard library."
         },
         {
           "name": "swift-benchmark",
-          "summary": "Catch performance regressions beside your tests with JSON baselines and metric budgets."
+          "outcome": "Catch performance regressions beside your tests with JSON baselines and metric budgets.",
+          "icon": "https://raw.githubusercontent.com/swift-library/swift-benchmark/HEAD/Documentation/Assets/Logo.png",
+          "kind": "library",
+          "title": "swift-benchmark",
+          "about": "Catch performance regressions beside your tests with JSON baselines and metric budgets."
         },
         {
           "name": "swift-gyb",
-          "summary": "Generate Swift sources and resource files from Python templates during SwiftPM builds."
+          "outcome": "Generate Swift sources and resource files from Python templates during SwiftPM builds.",
+          "icon": "https://raw.githubusercontent.com/swift-library/swift-gyb/HEAD/Documentation/Assets/Logo.png",
+          "kind": "tool",
+          "title": "swift-gyb",
+          "about": "Generate Swift sources and resource files from Python templates during SwiftPM builds."
         },
         {
           "name": "swift-package-template",
-          "summary": "A complete Swift package to create new swift-library packages from, with shared CI and release checks."
+          "outcome": "A complete Swift package to create new swift-library packages from, with shared CI and release checks.",
+          "icon": "https://raw.githubusercontent.com/swift-library/swift-package-template/HEAD/Documentation/Assets/Logo.png",
+          "kind": "distribution",
+          "title": "swift-package-template",
+          "about": "A complete Swift package to create new swift-library packages from, with shared CI and release checks."
+        },
+        {
+          "name": "github-workflows",
+          "outcome": "Shared GitHub Actions workflows and checks for swift-library repositories.",
+          "icon": "https://raw.githubusercontent.com/swift-library/.github/HEAD/Documentation/Assets/Logo.png",
+          "kind": "tool",
+          "title": "github-workflows",
+          "about": "Shared GitHub Actions workflows and checks for swift-library repositories."
+        },
+        {
+          "name": "swift-library.github.io",
+          "outcome": "Find Swift packages, copy install commands, and read their API documentation.",
+          "icon": "https://raw.githubusercontent.com/swift-library/.github/HEAD/Documentation/Assets/Logo.png",
+          "kind": "website",
+          "title": "swift-library.github.io",
+          "about": "Find Swift packages, copy install commands, and read their API documentation."
         }
       ]
     },
@@ -40,19 +94,35 @@
       "repositories": [
         {
           "name": "swift-data-writable",
-          "summary": "Insert, delete, and reorder SwiftData query results through a projected collection."
+          "outcome": "Insert, delete, and reorder SwiftData query results through a projected collection.",
+          "icon": "https://raw.githubusercontent.com/swift-library/swift-data-writable/HEAD/Documentation/Assets/Logo.png",
+          "kind": "library",
+          "title": "swift-data-writable",
+          "about": "Insert, delete, and reorder SwiftData query results through a projected collection."
         },
         {
           "name": "swift-userdefault",
-          "summary": "Persist primitives, raw-value enums, and Codable models through one UserDefaults property wrapper."
+          "outcome": "Persist primitives, raw-value enums, and Codable models through one UserDefaults property wrapper.",
+          "icon": "https://raw.githubusercontent.com/swift-library/swift-userdefault/HEAD/Documentation/Assets/Logo.png",
+          "kind": "library",
+          "title": "swift-userdefault",
+          "about": "Persist primitives, raw-value enums, and Codable models through one UserDefaults property wrapper."
         },
         {
           "name": "swift-redux",
-          "summary": "Manage unidirectional app state with one store, reducers, middleware, and live subscriptions."
+          "outcome": "Manage unidirectional app state with one store, reducers, middleware, and live subscriptions.",
+          "icon": "https://raw.githubusercontent.com/swift-library/swift-redux/HEAD/Documentation/Assets/Logo.png",
+          "kind": "library",
+          "title": "swift-redux",
+          "about": "Manage unidirectional app state with one store, reducers, middleware, and live subscriptions."
         },
         {
           "name": "swift-pdf",
-          "summary": "Build PDF viewers in SwiftUI with search, page overlays, and navigation driven by your controls."
+          "outcome": "Build PDF viewers in SwiftUI with search, page overlays, and navigation driven by your controls.",
+          "icon": "https://raw.githubusercontent.com/swift-library/swift-pdf/HEAD/Documentation/Assets/Logo.png",
+          "kind": "library",
+          "title": "swift-pdf",
+          "about": "Build PDF viewers in SwiftUI with search, page overlays, and navigation driven by your controls."
         }
       ]
     },
@@ -61,15 +131,27 @@
       "repositories": [
         {
           "name": "swift-codex",
-          "summary": "Drive the Codex CLI from Swift through separate exec, App Server, and MCP interfaces."
+          "outcome": "Drive the Codex CLI from Swift through separate exec, App Server, and MCP interfaces.",
+          "icon": "https://raw.githubusercontent.com/swift-library/swift-codex/HEAD/Documentation/Assets/Logo.png",
+          "kind": "library",
+          "title": "swift-codex",
+          "about": "Drive the Codex CLI from Swift through separate exec, App Server, and MCP interfaces."
         },
         {
           "name": "swift-appstoreconnect",
-          "summary": "Build typed App Store Connect integrations and preview CLI writes before confirming them."
+          "outcome": "Build typed App Store Connect integrations and preview CLI writes before confirming them.",
+          "icon": "https://raw.githubusercontent.com/swift-library/swift-appstoreconnect/HEAD/Documentation/Assets/Logo.png",
+          "kind": "library",
+          "title": "swift-appstoreconnect",
+          "about": "Build typed App Store Connect integrations and preview CLI writes before confirming them."
         },
         {
           "name": "swift-json-schema",
-          "summary": "Validate JSON against JSON Schema without losing number precision."
+          "outcome": "Validate JSON against JSON Schema without losing number precision.",
+          "icon": "https://raw.githubusercontent.com/swift-library/swift-json-schema/HEAD/Documentation/Assets/Logo.png",
+          "kind": "library",
+          "title": "swift-json-schema",
+          "about": "Validate JSON against JSON Schema without losing number precision."
         }
       ]
     },
@@ -78,11 +160,19 @@
       "repositories": [
         {
           "name": "swift-sh",
-          "summary": "Run single-file Swift scripts with package dependencies declared inline."
+          "outcome": "Run single-file Swift scripts with package dependencies declared inline.",
+          "icon": "https://raw.githubusercontent.com/swift-library/swift-sh/HEAD/Documentation/Assets/Logo.png",
+          "kind": "tool",
+          "title": "swift-sh",
+          "about": "Run single-file Swift scripts with package dependencies declared inline."
         },
         {
           "name": "homebrew-tap",
-          "summary": "Install swift-library command-line tools from release archives verified by SHA-256."
+          "outcome": "Install swift-library command-line tools from release archives verified by SHA-256.",
+          "icon": "https://raw.githubusercontent.com/swift-library/homebrew-tap/HEAD/Documentation/Assets/Logo.png",
+          "kind": "distribution",
+          "title": "homebrew-tap",
+          "about": "Install swift-library command-line tools from release archives verified by SHA-256."
         }
       ]
     },
@@ -91,9 +181,17 @@
       "repositories": [
         {
           "name": "skills",
-          "summary": "Build and maintain Swift packages and Apple apps with agent skills in a single plugin."
+          "outcome": "Build and maintain Swift packages and Apple apps with agent skills in a single plugin.",
+          "icon": "https://raw.githubusercontent.com/swift-library/skills/HEAD/Documentation/Assets/Logo.png",
+          "kind": "distribution",
+          "title": "skills",
+          "about": "Build and maintain Swift packages and Apple apps with agent skills in a single plugin."
         }
       ]
     }
-  ]
+  ],
+  "maintainer": {
+    "label": "Maintained by @showxu",
+    "url": "https://github.com/showxu"
+  }
 }

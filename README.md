@@ -7,7 +7,7 @@
 <h1 align="center">.github</h1>
 
 <p align="center">
-  Publish independently versioned Swift packages with shared checks and release evidence.
+  Publish independently versioned Swift packages with shared checks.
 </p>
 
 <p align="center">
@@ -30,7 +30,7 @@
 
 ## Overview
 
-Connect a package’s own check command and compiler matrix to reusable validation and publication workflows. Pull requests report public API changes for maintainer review, and releases attach validation results and a scoped API snapshot; the [workflow reference](Documentation/Reference/WorkflowIntegration.md) explains caller inputs and collection gaps.
+This repository holds the organization profile, catalog, community guidance, release policy and design sources. Shared CI and checkers live in [github-workflows](https://github.com/swift-library/github-workflows#readme); each package owns its source and validation configuration.
 
 ## Quick look
 
@@ -39,12 +39,12 @@ Call the shared validation workflow from a package:
 ```yaml
 jobs:
   validate:
-    uses: swift-library/.github/.github/workflows/swift-package-ci.yml@9aa78ca8d6346242460006178b9808114beee9f8
+    uses: swift-library/github-workflows/.github/workflows/swift-package.yml@c73e5121f19dd64e85d3b506dfae95685647d065
 ```
 
 ## Install
 
-Follow [workflow integration](Documentation/Reference/WorkflowIntegration.md) to add package-owned release configuration and callers pinned to full commit SHAs. Start a new repository with the [package template](https://github.com/swift-library/swift-package-template).
+Follow [package adoption](CONTRIBUTING.md#new-packages) to add package-owned configuration and callers pinned to full commit SHAs. Start a new repository with the [package template](https://github.com/swift-library/swift-package-template).
 
 ## Usage
 
@@ -53,20 +53,22 @@ Keep source, versions, compatibility, and validation commands in each package. U
 ## Requirements
 
 - GitHub Actions for reusable workflow callers
-- Python, actionlint, and GitHub CLI for local standards checks
+- actionlint for caller syntax and GitHub CLI for live settings reads
+- The [github-readme-design toolchain](https://github.com/showxu/skills/blob/master/skills/github-readme-design/references/renderers.md) for local rendering and checks
 - The compiler, SDK, and platform declarations owned by each consuming package
 
 ## Documentation
 
 - [Versioning and release](VERSIONING.md)
-- [Workflow integration](Documentation/Reference/WorkflowIntegration.md)
+- [Shared workflow interfaces](https://github.com/swift-library/github-workflows#readme)
+- [Package adoption](CONTRIBUTING.md#new-packages)
 - [Design system](DESIGN.md)
 - [Maintenance](MAINTENANCE.md)
 - [Security reporting](SECURITY.md)
 
 ## Contributing
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) and run `Scripts/check` before submitting a pull request. Follow the [code of conduct](CODE_OF_CONDUCT.md) and [support guide](SUPPORT.md).
+Read [CONTRIBUTING.md](CONTRIBUTING.md) for local validation before submitting a pull request. Follow the [code of conduct](CODE_OF_CONDUCT.md) and [support guide](SUPPORT.md).
 
 ## License
 
