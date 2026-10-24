@@ -649,3 +649,74 @@ Maintainers review each candidate and update the tap through the normal signed
 pull-request flow. See the tap's
 [Release Updates](https://github.com/swift-library/homebrew-tap/blob/master/Documentation/ReleaseUpdates.md)
 for validation and publication steps.
+
+## Package Template
+
+New packages are created from `swift-package-template`, which is published
+one way from its producers. The paths declared below are generated from each
+producer's latest `vMAJOR.MINOR.PATCH` release; the template owns the rest of
+its files, including `Package.swift`, `Sources`, `Tests`, `VERSION` and
+`CHANGELOG.md`.
+
+- Generated paths are never edited in the template. Change the producer and
+  release it; the next publication carries the change.
+- After a producer release, run the
+  [template publisher](https://github.com/swift-library/github-workflows#package-template-publication)
+  from checkouts of this repository and the template at their default
+  branches. It regenerates every declared path from each producer's latest
+  release and opens one pull request in the template, which the template's
+  required checks gate. No App holds credentials for cross-repository pull
+  requests, so a maintainer runs it with their own.
+- Standard files that no generator produces, such as `LICENSE.txt`, `NOTICE`,
+  `.swift-format`, `.spi.yml`, `.gitignore` and `.github/dependabot.yml`, follow
+  these standards and are maintained by the repository steward, like every
+  other repository's. The CI callers pin github-workflows by commit.
+- Packages created from the template own their copies. Documentation rule
+  changes reach them through each package's documentation audit.
+
+Each generator names its producer repository, the command run from the root
+of that repository's release checkout, and the template path of each file it
+generates. In the command, `{template}` is the template checkout, `{output}`
+an empty directory that receives the generated files and `{declaration}` this
+repository's checkout. Every generator from one repository runs from the same
+release.
+
+<!-- template-composition -->
+```json
+{
+  "schema": 1,
+  "template": "swift-library/swift-package-template",
+  "generators": [
+    {
+      "repository": "swift-library/skills",
+      "command": [
+        "python3", "-B", "skills/swiftpm-docs/scripts/export_profile.py",
+        "--profile", "minimal", "--module", "canonical-artifacts",
+        "--package-root", "{template}", "--output", "{output}",
+        "--set", "repo-name=swift-package-template",
+        "--set", "package-name=swift-package-template"
+      ],
+      "files": {
+        "AGENTS.md": "AGENTS.md",
+        "README.md": "README.md",
+        "CONTRIBUTING.md": "CONTRIBUTING.md",
+        "Documentation/README.md": "Documentation/README.md",
+        "Documentation/Architecture/README.md": "Documentation/Architecture/README.md",
+        "Documentation/Reference/Release.md": "Documentation/Reference/Release.md"
+      }
+    },
+    {
+      "repository": "showxu/skills",
+      "command": [
+        "python3", "-B", "skills/apple-framework-icon-design/scripts/design_icons.py",
+        "{declaration}/DESIGN.md", "--out", "{output}",
+        "--name", "swift-package-template", "--png"
+      ],
+      "files": {
+        "Documentation/Assets/Logo.svg": "swift-package-template.svg",
+        "Documentation/Assets/Logo.png": "swift-package-template.png"
+      }
+    }
+  ]
+}
+```

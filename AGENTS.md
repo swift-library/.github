@@ -48,7 +48,9 @@ and a pinned workflow run before adoption.
 
 Read VERSIONING.md before changing release policy. Read MAINTENANCE.md before
 changing a GitHub setting, ruleset, App, or required check, and update it in
-the same pull request. Package adoption belongs in
+the same pull request. Change the package template's generated files through
+their producers and the [composition](MAINTENANCE.md#package-template), not in
+the template. Package adoption belongs in
 [CONTRIBUTING.md](CONTRIBUTING.md#new-packages); workflow interfaces belong in the
 [github-workflows README](https://github.com/swift-library/github-workflows#readme).
 Keep thin callers in .github/workflows and variable values in package-owned
