@@ -2,5 +2,6 @@
   "instructions": {
     "agents": ["claude-code", "codex"],
     "sections": ["guide", "code-review-rules"]
-  }
+  },
+  "sources": {}
 }
