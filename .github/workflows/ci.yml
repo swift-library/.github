@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   organization:
-    uses: swift-library/github-workflows/.github/workflows/organization.yml@0d016c87e9631d5c6ecdc781226d843aaec22e71
+    uses: swift-library/github-workflows/.github/workflows/organization.yml@780ee5a8150d1088ac4256862bdadab632f89912
     with:
       organization: swift-library
       declaration-repository: ${{ github.repository }}
