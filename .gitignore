@@ -1,2 +1,5 @@
 /.build/
 __pycache__/
+/.agent/cache/
+/.agent/.agents.lock
+/.agent/transaction.json
