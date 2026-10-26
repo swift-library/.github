@@ -1,2 +1,6 @@
 /.build/
 __pycache__/
+/.agent/*
+!/.agent/instructions/
+!/.agent/agents.json
+!/.agent/agents.resolved

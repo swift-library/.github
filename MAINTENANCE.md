@@ -691,7 +691,7 @@ release.
       "repository": "swift-library/skills",
       "command": [
         "python3", "-B", "skills/swiftpm-docs/scripts/export_profile.py",
-        "--profile", "minimal", "--module", "canonical-artifacts",
+        "--profile", "minimal",
         "--package-root", "{template}", "--output", "{output}",
         "--set", "repo-name=swift-package-template",
         "--set", "package-name=swift-package-template"
